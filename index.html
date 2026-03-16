@@ -599,7 +599,7 @@ header{background:var(--white);border-bottom:2px solid var(--greenlb);height:62p
         <div class="chatav">🤖</div>
         <div>
           <div class="chatnm" data-kaa="EcoMap ·  AI Kómekshi" data-uz="EcoMap · Gemini AI Yordamchi">EcoMap ·  AI Kómekshi</div>
-          <div class="chatst" data-kaa="● AI maslahat" data-uz="● Faol · gemini-2.5-flash">● AI maslahat</div>
+          <div class="chatst" data-kaa="● AI maslahat" data-uz="● Faol · gemini-1.5-flash">● AI maslahat</div>
         </div>
       </div>
       <div class="chatmsgs" id="chatMsgs">
@@ -822,7 +822,7 @@ header{background:var(--white);border-bottom:2px solid var(--greenlb);height:62p
 <script>
 
 const CFG = {
-  geminiKey: 'AIzaSyBGdDnZYtXIs858rGJT9Mks_vIHEAkE_RE',
+  geminiKey: 'AIzaSyD0kaeTHk_aTTSH5J_FLrwhCNbPlUvefkE',
   cloudName: 'druiinnxa',
   uploadPreset: 'lbk3l563',
   supabaseUrl: 'https://hnftvykdczrwijajtcpx.supabase.co',
@@ -1079,7 +1079,7 @@ async function analyzeWithGemini(file){
   }
   try{
     const b64=await new Promise((r,j)=>{const fr=new FileReader();fr.onload=e=>r(e.target.result.split(',')[1]);fr.onerror=j;fr.readAsDataURL(file);});
-    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${CFG.geminiKey}`,{
+    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${CFG.geminiKey}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{parts:[{inline_data:{mime_type:file.type||'image/jpeg',data:b64}},{text:'Bul súwrettegi qaldıq/ekologiya mashqalanı tarawla. TEK JSON: {"type":"Plastik|Uy qaldıqları|Qurilıs|Ximiyalıq|Shısha|Basqa","priority":"low|mid|high","confidence":0-100,"comment":"qısqa izoh"}'}]}]})
     });
@@ -1235,7 +1235,7 @@ async function generateZone(){
 <span style="color:var(--sun)">⚠️ Jámi ${hr.length} ta qawipli mashqala bar</span>`;return;
   }
   try{
-    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${CFG.geminiKey}`,{
+    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${CFG.geminiKey}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{parts:[{text:`EcoMap xabarları: ${JSON.stringify(issues.slice(0,8).map(i=>({addr:i.addr,type:i.type,priority:i.priority,resolved:i.confirmed})))}. Qısqa Qaraqalpaqsha qızıl zona tahlili (3-4 gap).`}]}]})
     });
@@ -1254,7 +1254,7 @@ async function generateMonthReport(){
 <span style="color:var(--green)">✅ Umumiy holat yaxshi!</span>`;return;
   }
   try{
-    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${CFG.geminiKey}`,{
+    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${CFG.geminiKey}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{parts:[{text:`EcoMap aylıq: jámi ${tot}, tazalandı ${solv}, AI ${aiC}. Qısqa Qaraqalpaqsha esabat (4-5 gap).`}]}]})
     });
@@ -1273,7 +1273,7 @@ async function sendChat(){
       await new Promise(r=>setTimeout(r,900));typ.remove();
       addMsg('Demo rejimida ishlaydi. aistudio.google.com da BEPUL Gemini API kaliti oling!','bot');return;
     }
-    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${CFG.geminiKey}`,{
+    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${CFG.geminiKey}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         system_instruction:{parts:[{text:'Siz EcoMap Nukus AI yordamchisisiz. Faqat ekologiya, chiqindilar, Orol dengizi, Qoraqalpog\'iston tabiatini muhofaza qilish haqida qisqa va aniq javob bering. Qaraqalpaq tilida so\'rasalar Qaraqalpaq tilida javob bering.'}]},
@@ -1514,7 +1514,7 @@ async function getWeatherAiTip(cur, w, cityName){
       ?`${cityName} qalasında bugün hawa: ${Math.round(cur.temperature_2m)}°C, ${w.kaa}, samal ${Math.round(cur.wind_speed_10m)}km/h. Ekologiya haqqinda  Qaraqalpaqsha usinislar ber ().`
       :`${cityName} shahrida bugun havo: ${Math.round(cur.temperature_2m)}°C, ${w.uz}, shamol ${Math.round(cur.wind_speed_10m)}km/h. Ekologiya va chiqindi yig'ish nuqtai nazaridan qisqa O'zbekcha tavsiya ber ().`;
 
-    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${CFG.geminiKey}`,{
+    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${CFG.geminiKey}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
     });
