@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="kaa">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>EcoMap Nukus — Ekologiya Platforması</title>
+<meta name="description" content="Nukus hám Qaraqalpaqstan ekologiya kartasi. Qaldıq kórseń — xabar ber!"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --sky:#e8f4fd;
+  --green:#2d9e5f;--green2:#25855a;--greenl:#e6f7ee;--greenlb:#b7e4c7;
+  --blue:#3a86d4;--bluel:#e3f0fb;
+  --sun:#f4a621;--sunl:#fff3dc;
+  --red:#e84c4c;--redl:#fdeaea;
+  --purple:#7c5cbf;--purplel:#f0ebff;
+  --white:#ffffff;--bg:#f0f6ff;--bg2:#e6eef8;
+  --card:#ffffff;
+  --text:#1a2e1a;--text2:#456045;--text3:#7a9e7a;
+  --border:#d0e8d0;
+  --r:18px;--r2:14px;--r3:10px;
+  --sh:0 2px 16px rgba(45,158,95,.10),0 1px 4px rgba(0,0,0,.06);
+  --sh2:0 8px 32px rgba(45,158,95,.15),0 2px 8px rgba(0,0,0,.08);
+}
+html{height:100%;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;font-size:15px;line-height:1.55;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--greenlb);border-radius:2px;}
+
+/* ===== AUTH ===== */
+#authWrap{position:fixed;inset:0;background:linear-gradient(160deg,#e8f8f0 0%,#d4eeff 50%,#e8f4fd 100%);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;}
+#authWrap.gone{display:none;}
+.auth-card{background:var(--white);border-radius:28px;padding:36px 28px;width:100%;max-width:380px;box-shadow:var(--sh2);border:2px solid var(--greenlb);}
+.auth-top{text-align:center;margin-bottom:28px;}
+.auth-emoji{font-size:52px;margin-bottom:8px;display:block;animation:bounce2 2s infinite;}
+@keyframes bounce2{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.auth-name{font-size:28px;font-weight:900;color:var(--text);letter-spacing:-.5px;}
+.auth-name em{color:var(--green);font-style:normal;}
+.auth-city{font-size:13px;color:var(--text3);font-weight:600;letter-spacing:.5px;margin-top:2px;}
+.a-tabs{display:flex;gap:6px;background:var(--bg);border-radius:14px;padding:5px;margin-bottom:22px;border:1.5px solid var(--border);}
+.a-tab{flex:1;padding:9px;text-align:center;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;color:var(--text3);transition:all .2s;}
+.a-tab.on{background:var(--green);color:#fff;box-shadow:0 2px 8px rgba(45,158,95,.3);}
+.a-err{background:var(--redl);border:1.5px solid #f5b8b8;border-radius:10px;padding:10px 13px;font-size:13px;color:var(--red);font-weight:600;margin-bottom:14px;display:none;}
+.a-err.on{display:block;}
+.a-lbl{font-size:12px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.7px;display:block;margin-bottom:5px;}
+.a-inp{width:100%;padding:13px 15px;background:var(--bg);border:2px solid var(--border);border-radius:var(--r3);font-size:15px;font-family:'Nunito',sans-serif;color:var(--text);outline:none;transition:all .2s;font-weight:600;margin-bottom:12px;}
+.a-inp:focus{border-color:var(--green);background:var(--white);box-shadow:0 0 0 3px rgba(45,158,95,.12);}
+.a-inp::placeholder{color:var(--text3);font-weight:400;}
+.a-btn{width:100%;padding:14px;background:var(--green);color:#fff;border:none;border-radius:var(--r3);font-size:16px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .2s;letter-spacing:.2px;margin-top:2px;}
+.a-btn:hover{background:var(--green2);transform:translateY(-1px);box-shadow:0 4px 16px rgba(45,158,95,.3);}
+.a-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.a-or{display:flex;align-items:center;gap:10px;margin:14px 0;}
+.a-or::before,.a-or::after{content:'';flex:1;height:1.5px;background:var(--border);}
+.a-or span{font-size:12px;color:var(--text3);font-weight:700;}
+.g-btn{width:100%;padding:13px;background:var(--white);border:2px solid var(--border);border-radius:var(--r3);font-size:14px;font-weight:700;cursor:pointer;color:var(--text2);font-family:'Nunito',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;}
+.g-btn:hover{border-color:var(--green);color:var(--green);}
+.a-skip{text-align:center;margin-top:14px;font-size:13px;color:var(--text3);cursor:pointer;font-weight:700;transition:color .2s;}
+.a-skip:hover{color:var(--green);}
+
+/* ===== HEADER ===== */
+header{background:var(--white);border-bottom:2px solid var(--greenlb);height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:500;box-shadow:0 2px 12px rgba(45,158,95,.08);}
+.hlogo{display:flex;align-items:center;gap:10px;}
+.hlogo-ic{width:38px;height:38px;background:linear-gradient(135deg,var(--green),var(--green2));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 2px 8px rgba(45,158,95,.3);}
+.hlogo-tx{font-size:20px;font-weight:900;color:var(--text);letter-spacing:-.3px;}
+.hlogo-tx em{color:var(--green);font-style:normal;}
+.hlogo-sub{font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.5px;text-transform:uppercase;}
+.hright{display:flex;align-items:center;gap:6px;}
+.lang-sw{display:flex;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;overflow:hidden;}
+.lsw{padding:5px 10px;font-size:11px;font-weight:800;color:var(--text3);cursor:pointer;transition:all .15s;letter-spacing:.5px;}
+.lsw.on{background:var(--green);color:#fff;}
+.live-pill{display:flex;align-items:center;gap:5px;background:var(--greenl);border:1.5px solid var(--greenlb);border-radius:20px;padding:5px 11px;}
+.ldot{width:7px;height:7px;border-radius:50%;background:var(--red);transition:background .3s;}
+.ldot.on{background:var(--green);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.5}}
+.ltxt{font-size:11px;color:var(--green);font-weight:800;}
+.uav{width:36px;height:36px;border-radius:50%;background:var(--greenl);border:2.5px solid var(--greenlb);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:var(--green);cursor:pointer;transition:all .2s;flex-shrink:0;}
+.uav:hover{border-color:var(--green);box-shadow:0 0 0 3px rgba(45,158,95,.15);}
+
+/* ===== STATS ===== */
+.sbar{display:grid;grid-template-columns:repeat(4,1fr);background:var(--white);border-bottom:2px solid var(--greenlb);}
+.si{padding:10px 4px;text-align:center;border-right:1.5px solid var(--greenlb);}
+.si:last-child{border-right:none;}
+.si-n{font-size:20px;font-weight:900;color:var(--green);line-height:1;letter-spacing:-.5px;}
+.si-l{font-size:9px;color:var(--text3);margin-top:2px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+
+/* ===== TABS ===== */
+.tabs{background:var(--white);border-bottom:2px solid var(--greenlb);display:flex;overflow-x:auto;scrollbar-width:none;position:sticky;top:62px;z-index:400;}
+.tabs::-webkit-scrollbar{display:none;}
+.tb{flex-shrink:0;padding:13px 14px;font-size:13px;font-weight:700;border:none;background:none;color:var(--text3);cursor:pointer;border-bottom:3px solid transparent;transition:all .18s;font-family:'Nunito',sans-serif;white-space:nowrap;}
+.tb.on{color:var(--green);border-bottom-color:var(--green);}
+.tbdot{display:inline-block;width:7px;height:7px;background:var(--red);border-radius:50%;margin-left:4px;vertical-align:middle;}
+.pn{display:none;}
+.pn.on{display:block;animation:fa .2s ease;}
+@keyframes fa{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== MAP ===== */
+#map{height:calc(100vh - 224px);min-height:340px;}
+.mflt{background:var(--white);padding:8px 12px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;border-bottom:1.5px solid var(--greenlb);}
+.mflt::-webkit-scrollbar{display:none;}
+.mf{flex-shrink:0;padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--white);font-size:12px;font-weight:700;color:var(--text2);cursor:pointer;font-family:'Nunito',sans-serif;transition:all .18s;}
+.mf.on{background:var(--greenl);color:var(--green);border-color:var(--greenlb);}
+.leaflet-popup-content-wrapper{background:var(--white)!important;border:2px solid var(--greenlb)!important;border-radius:18px!important;padding:0!important;box-shadow:var(--sh2)!important;}
+.leaflet-popup-tip{background:var(--white)!important;}
+.leaflet-popup-content{margin:0!important;width:240px!important;}
+.leaflet-container a.leaflet-popup-close-button{color:var(--text3)!important;top:9px!important;right:9px!important;font-size:20px!important;}
+.pp{padding:14px;}
+.pp-img{width:100%;height:110px;object-fit:cover;border-radius:12px;margin-bottom:10px;}
+.pp-ico{width:100%;height:80px;border-radius:12px;background:var(--greenl);display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:10px;}
+.pp-badge{display:inline-flex;align-items:center;gap:4px;background:var(--greenl);color:var(--green);font-size:11px;font-weight:800;padding:3px 10px;border-radius:20px;margin-bottom:8px;}
+.pp-addr{font-size:14px;font-weight:800;margin-bottom:5px;color:var(--text);line-height:1.3;}
+.pp-meta{font-size:12px;color:var(--text3);margin-bottom:11px;line-height:1.8;font-weight:600;}
+.pp-btn{width:100%;padding:10px;background:var(--green);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;margin-bottom:5px;transition:all .2s;}
+.pp-btn:hover{background:var(--green2);}
+.pp-wait{width:100%;padding:9px;background:var(--sunl);color:var(--sun);border:1.5px solid #ffd280;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;margin-bottom:5px;}
+.pp-done{width:100%;padding:9px;background:var(--greenl);color:var(--green);border-radius:10px;font-size:12px;font-weight:800;text-align:center;border:1.5px solid var(--greenlb);}
+
+/* ===== LIST ===== */
+.lw{padding:14px;max-width:680px;margin:0 auto;}
+.srchbox{display:flex;align-items:center;gap:8px;background:var(--white);border:2px solid var(--greenlb);border-radius:var(--r2);padding:10px 14px;margin-bottom:10px;transition:border-color .2s;}
+.srchbox:focus-within{border-color:var(--green);}
+.srchbox input{flex:1;border:none;outline:none;font-size:14px;font-family:'Nunito',sans-serif;color:var(--text);background:transparent;font-weight:600;}
+.srchbox input::placeholder{color:var(--text3);font-weight:400;}
+.lfilts{display:flex;gap:5px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none;}
+.lfilts::-webkit-scrollbar{display:none;}
+.lf{flex-shrink:0;padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--white);font-size:12px;font-weight:700;color:var(--text2);cursor:pointer;font-family:'Nunito',sans-serif;transition:all .18s;}
+.lf.on{background:var(--greenl);color:var(--green);border-color:var(--greenlb);}
+.icard{display:flex;gap:10px;background:var(--white);border:2px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:9px;cursor:pointer;transition:all .2s;box-shadow:var(--sh);}
+.icard:hover{border-color:var(--greenlb);box-shadow:var(--sh2);transform:translateY(-2px);}
+.icard-img{width:56px;height:56px;border-radius:12px;object-fit:cover;flex-shrink:0;}
+.icard-ico{width:56px;height:56px;border-radius:12px;background:var(--greenl);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+.icard-body{flex:1;min-width:0;}
+.icard-type{font-size:10px;font-weight:800;color:var(--green);text-transform:uppercase;letter-spacing:.5px;}
+.icard-addr{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);}
+.icard-meta{font-size:12px;color:var(--text3);margin-top:2px;font-weight:600;}
+.icard-tags{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap;}
+.itag{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;}
+.idot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+
+/* ===== REPORT ===== */
+.rw{padding:16px;max-width:520px;margin:0 auto;}
+.flbl{font-size:12px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.7px;display:block;margin-bottom:7px;}
+.fg{margin-bottom:16px;}
+.typegrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.tybtn{padding:12px 8px;border:2px solid var(--border);border-radius:var(--r2);cursor:pointer;background:var(--white);font-size:13px;font-weight:700;text-align:center;color:var(--text2);transition:all .18s;font-family:'Nunito',sans-serif;}
+.tybtn:hover{border-color:var(--greenlb);}
+.tybtn.on{border-color:var(--green);background:var(--greenl);color:var(--green);}
+.gpsbtn{width:100%;padding:12px;background:var(--greenl);color:var(--green);border:2px solid var(--greenlb);border-radius:var(--r2);font-size:14px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;margin-bottom:8px;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.gpsbtn:hover{background:var(--green);color:#fff;}
+.tinp{width:100%;padding:12px 14px;background:var(--white);border:2px solid var(--border);border-radius:var(--r2);font-size:14px;font-family:'Nunito',sans-serif;color:var(--text);outline:none;transition:all .2s;font-weight:600;}
+.tinp:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(45,158,95,.1);}
+.tinp::placeholder{color:var(--text3);font-weight:400;}
+.prirow{display:flex;gap:7px;}
+.prib{flex:1;padding:11px 5px;border:2px solid var(--border);border-radius:var(--r2);font-size:12px;font-weight:800;text-align:center;cursor:pointer;background:var(--white);color:var(--text2);font-family:'Nunito',sans-serif;transition:all .18s;}
+.prib.low{border-color:var(--greenlb);background:var(--greenl);color:var(--green);}
+.prib.mid{border-color:#ffd280;background:var(--sunl);color:#c47f00;}
+.prib.high{border-color:#f5b8b8;background:var(--redl);color:var(--red);}
+.photobox{border:2.5px dashed var(--greenlb);border-radius:var(--r);overflow:hidden;background:var(--greenl);cursor:pointer;transition:all .2s;}
+.photobox:hover{border-color:var(--green);background:#d4f0e0;}
+.ph-ph{padding:28px 16px;text-align:center;}
+.ph-em{font-size:36px;margin-bottom:8px;}
+.ph-t{font-size:14px;font-weight:700;color:var(--text2);}
+.ph-s{font-size:12px;color:var(--text3);margin-top:3px;font-weight:600;}
+#prevImg{width:100%;max-height:200px;object-fit:cover;display:none;border-radius:14px;}
+.aibadge{background:var(--purplel);border:1.5px solid #c9b8f0;border-radius:10px;padding:9px 12px;margin-top:7px;font-size:12px;color:var(--purple);font-weight:700;display:none;align-items:center;gap:6px;}
+.aibadge.on{display:flex;}
+.progbar{width:100%;height:5px;background:var(--greenlb);border-radius:3px;margin-bottom:12px;overflow:hidden;display:none;}
+.progfill{height:100%;background:var(--green);width:0%;transition:width .3s;border-radius:3px;}
+.subbtn{width:100%;padding:15px;background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;border:none;border-radius:var(--r);font-size:16px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .2s;letter-spacing:.2px;box-shadow:0 4px 16px rgba(45,158,95,.3);}
+.subbtn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(45,158,95,.4);}
+.subbtn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;}
+
+/* ===== CONFIRM ===== */
+.cfw{padding:14px;max-width:680px;margin:0 auto;}
+.cfbanner{background:var(--sunl);border:2px solid #ffd280;border-radius:var(--r2);padding:14px;margin-bottom:14px;}
+.cfb-t{font-size:14px;font-weight:800;color:var(--sun);margin-bottom:3px;}
+.cfb-s{font-size:13px;color:var(--text2);line-height:1.5;font-weight:600;}
+
+/* ===== DASHBOARD ===== */
+.dw{padding:14px;max-width:780px;margin:0 auto;}
+.dgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:14px;}
+.dcard{background:var(--white);border:2px solid var(--border);border-radius:var(--r);padding:15px;box-shadow:var(--sh);transition:all .2s;}
+.dcard:hover{border-color:var(--greenlb);box-shadow:var(--sh2);}
+.dc-lbl{font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+.dc-val{font-size:30px;font-weight:900;color:var(--green);letter-spacing:-1px;line-height:1;}
+.dc-sub{font-size:11px;color:var(--text3);margin-top:4px;font-weight:600;}
+.dc-win{font-size:15px;font-weight:800;color:var(--text);margin-top:4px;}
+.chart-box{background:var(--white);border:2px solid var(--border);border-radius:var(--r);padding:15px;margin-bottom:10px;box-shadow:var(--sh);}
+.chart-ttl{font-size:13px;font-weight:800;color:var(--text);margin-bottom:13px;display:flex;align-items:center;gap:6px;}
+.barchart{display:flex;align-items:flex-end;gap:6px;height:90px;}
+.bar{flex:1;background:var(--greenl);border-radius:6px 6px 0 0;border:1.5px solid var(--greenlb);transition:height .6s;position:relative;}
+.bar:hover{background:var(--green);opacity:.8;}
+.barlbl{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--text3);font-weight:700;white-space:nowrap;}
+.barval{position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:800;color:var(--green);white-space:nowrap;}
+.ai-analysis{font-size:13px;color:var(--text2);line-height:1.9;font-weight:600;}
+
+/* ===== AI CHAT ===== */
+.chatwrap{display:flex;flex-direction:column;height:calc(100vh - 224px);}
+.chatheader{padding:12px 16px;border-bottom:2px solid var(--greenlb);background:var(--greenl);display:flex;align-items:center;gap:10px;}
+.chatav{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--blue));display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;box-shadow:0 2px 8px rgba(45,158,95,.3);}
+.chatnm{font-size:14px;font-weight:800;color:var(--text);}
+.chatst{font-size:11px;color:var(--green);font-weight:700;}
+.chatmsgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--bg);}
+.msg{display:flex;gap:7px;max-width:88%;}
+.msg.user{align-self:flex-end;flex-direction:row-reverse;}
+.mav{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.mav.bot{background:linear-gradient(135deg,var(--green),var(--blue));}
+.mav.user{background:var(--greenl);border:2px solid var(--greenlb);color:var(--green);font-weight:900;font-size:11px;}
+.mbub{padding:10px 13px;border-radius:14px;font-size:14px;line-height:1.6;font-weight:600;}
+.mbub.bot{background:var(--white);border:1.5px solid var(--border);color:var(--text);border-bottom-left-radius:4px;box-shadow:var(--sh);}
+.mbub.user{background:var(--green);color:#fff;border-bottom-right-radius:4px;box-shadow:0 2px 8px rgba(45,158,95,.3);}
+.mtime{font-size:10px;color:var(--text3);margin-top:4px;font-weight:600;}
+.chatinpa{padding:12px 14px;border-top:2px solid var(--greenlb);background:var(--white);}
+.chsugs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-bottom:8px;}
+.chsugs::-webkit-scrollbar{display:none;}
+.csug{flex-shrink:0;padding:6px 13px;background:var(--greenl);border:1.5px solid var(--greenlb);border-radius:20px;font-size:12px;font-weight:700;color:var(--green);cursor:pointer;font-family:'Nunito',sans-serif;white-space:nowrap;transition:all .18s;}
+.csug:hover{background:var(--green);color:#fff;}
+.chatrow{display:flex;gap:7px;}
+.chatinp{flex:1;padding:11px 15px;background:var(--bg);border:2px solid var(--greenlb);border-radius:24px;font-size:14px;font-family:'Nunito',sans-serif;color:var(--text);outline:none;transition:border-color .2s;font-weight:600;}
+.chatinp:focus{border-color:var(--green);background:var(--white);}
+.chatinp::placeholder{color:var(--text3);font-weight:400;}
+.chatsend{width:42px;height:42px;border-radius:50%;background:var(--green);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;transition:all .2s;box-shadow:0 2px 8px rgba(45,158,95,.3);}
+.chatsend:hover{background:var(--green2);transform:scale(1.08);}
+.typing{display:flex;gap:4px;align-items:center;padding:4px 0;}
+.typing span{width:7px;height:7px;border-radius:50%;background:var(--greenlb);animation:bounce3 .8s infinite;}
+.typing span:nth-child(2){animation-delay:.16s;}
+.typing span:nth-child(3){animation-delay:.32s;}
+@keyframes bounce3{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
+
+/* ===== RATING ===== */
+.ratw{padding:14px;max-width:680px;margin:0 auto;}
+.rstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.rs{background:var(--white);border:2px solid var(--border);border-radius:var(--r2);padding:13px 6px;text-align:center;box-shadow:var(--sh);}
+.rs-n{font-size:24px;font-weight:900;color:var(--green);letter-spacing:-.5px;}
+.rs-l{font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:800;letter-spacing:.5px;}
+.mwcard{background:linear-gradient(135deg,var(--sunl),#fff9ed);border:2px solid #ffd280;border-radius:var(--r);padding:15px;margin-bottom:14px;display:flex;align-items:center;gap:12px;box-shadow:var(--sh);}
+.mwic{font-size:40px;}
+.mw-ttl{font-size:11px;font-weight:800;color:var(--sun);text-transform:uppercase;letter-spacing:.5px;}
+.mw-nm{font-size:18px;font-weight:900;color:var(--text);}
+.mw-sb{font-size:12px;color:var(--text3);font-weight:600;}
+.badgegrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;}
+.badgecard{background:var(--white);border:2px solid var(--border);border-radius:var(--r2);padding:14px;text-align:center;box-shadow:var(--sh);transition:all .2s;}
+.badgecard:hover{border-color:var(--greenlb);transform:translateY(-2px);}
+.badge-ic{font-size:30px;margin-bottom:5px;}
+.badge-nm{font-size:13px;font-weight:800;color:var(--text);}
+.badge-rq{font-size:11px;color:var(--text3);font-weight:600;}
+.seclbl{font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;}
+.lbitem{display:flex;align-items:center;gap:10px;padding:12px 13px;background:var(--white);border:2px solid var(--border);border-radius:var(--r2);margin-bottom:8px;transition:all .2s;box-shadow:var(--sh);}
+.lbitem:hover{border-color:var(--greenlb);}
+.lbpos{font-size:13px;font-weight:900;color:var(--text3);width:20px;}
+.lbav{width:40px;height:40px;border-radius:50%;background:var(--greenl);border:2px solid var(--greenlb);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:var(--green);flex-shrink:0;}
+.lbinf{flex:1;}
+.lbnm{font-size:14px;font-weight:700;color:var(--text);}
+.lbbdg{font-size:11px;color:var(--text3);font-weight:600;}
+.lbpts{font-size:16px;font-weight:900;color:var(--green);}
+
+/* ===== CENTERS ===== */
+.centw{padding:14px;max-width:680px;margin:0 auto;}
+.ccard{background:var(--white);border:2px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:var(--sh);transition:all .2s;}
+.ccard:hover{border-color:var(--greenlb);box-shadow:var(--sh2);}
+.cch{display:flex;gap:10px;align-items:center;margin-bottom:9px;}
+.ccic{width:46px;height:46px;border-radius:13px;background:var(--greenl);border:2px solid var(--greenlb);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.ccnm{font-size:15px;font-weight:800;color:var(--text);}
+.ccdst{font-size:12px;color:var(--green);font-weight:700;}
+.ccaddr{font-size:13px;color:var(--text3);margin-bottom:7px;font-weight:600;}
+.cctags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;}
+.cctag{font-size:11px;padding:3px 10px;border-radius:20px;background:var(--greenl);color:var(--green);font-weight:700;border:1.5px solid var(--greenlb);}
+.cchr{font-size:12px;color:var(--text3);margin-bottom:10px;font-weight:600;}
+.ccbtns{display:flex;gap:7px;}
+.ccb1{flex:1;padding:10px;background:var(--green);color:#fff;border:none;border-radius:var(--r3);font-size:13px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .2s;}
+.ccb1:hover{background:var(--green2);}
+.ccb2{flex:1;padding:10px;border:2px solid var(--greenlb);background:var(--greenl);color:var(--green);border-radius:var(--r3);font-size:13px;font-weight:800;text-decoration:none;text-align:center;display:block;transition:all .2s;}
+.ccb2:hover{background:var(--green);color:#fff;}
+
+/* ===== ABOUT ===== */
+.aboutw{padding:16px;max-width:580px;margin:0 auto;}
+.abouthero{background:linear-gradient(135deg,var(--green),var(--green2));border-radius:22px;padding:28px 22px;text-align:center;margin-bottom:14px;color:#fff;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(45,158,95,.25);}
+.abouthero::after{content:'🌿';position:absolute;right:-15px;bottom:-15px;font-size:90px;opacity:.1;transform:rotate(-15deg);}
+.ah-em{font-size:48px;margin-bottom:10px;display:block;}
+.ah-t{font-size:22px;font-weight:900;margin-bottom:8px;}
+.ah-s{font-size:14px;opacity:.9;line-height:1.7;font-weight:600;}
+.aboutcard{background:var(--white);border:2px solid var(--border);border-radius:var(--r);padding:15px;margin-bottom:10px;box-shadow:var(--sh);}
+.ac-t{font-size:14px;font-weight:800;margin-bottom:11px;color:var(--text);display:flex;align-items:center;gap:6px;}
+.acb{font-size:13px;color:var(--text2);line-height:1.8;font-weight:600;}
+.step{display:flex;gap:10px;margin-bottom:9px;align-items:flex-start;}
+.stepn{width:26px;height:26px;border-radius:50%;background:var(--green);color:#fff;font-size:12px;font-weight:900;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.stept{font-size:13px;color:var(--text2);line-height:1.6;padding-top:4px;font-weight:600;}
+.tagpills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.tagpill{background:var(--greenl);border:1.5px solid var(--greenlb);border-radius:20px;padding:5px 13px;font-size:12px;color:var(--green);font-weight:700;}
+
+/* ===== PROFILE ===== */
+.profw{max-width:480px;margin:0 auto;}
+.profhero{background:linear-gradient(135deg,var(--green),#1d7a47);padding:28px 20px;text-align:center;color:#fff;}
+.profav{width:74px;height:74px;border-radius:50%;background:rgba(255,255,255,.25);border:3px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900;margin:0 auto 12px;color:#fff;}
+.profnm{font-size:20px;font-weight:900;margin-bottom:3px;}
+.profem{font-size:13px;opacity:.8;margin-bottom:8px;font-weight:600;}
+.profbdg{background:rgba(255,255,255,.25);border-radius:20px;padding:4px 15px;font-size:13px;font-weight:800;display:inline-block;}
+.profstats{display:grid;grid-template-columns:repeat(3,1fr);background:var(--white);border-bottom:2px solid var(--border);}
+.ps{padding:14px 4px;text-align:center;border-right:2px solid var(--border);}
+.ps:last-child{border-right:none;}
+.psn{font-size:22px;font-weight:900;color:var(--green);}
+.psl{font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:800;letter-spacing:.4px;}
+.profitem{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--white);border-bottom:1.5px solid var(--border);cursor:pointer;transition:background .15s;}
+.profitem:hover{background:var(--greenl);}
+.profic{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.proftx{flex:1;}
+.proftx-t{font-size:14px;font-weight:700;color:var(--text);}
+.proftx-s{font-size:12px;color:var(--text3);font-weight:600;}
+.logoutrow{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--white);margin-top:10px;cursor:pointer;transition:background .15s;border-top:1.5px solid var(--border);}
+.logoutrow:hover{background:var(--redl);}
+
+/* ===== MODALS ===== */
+.modalbg{position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(8px);z-index:8000;display:none;align-items:flex-end;justify-content:center;}
+.modalbg.on{display:flex;}
+.modal{background:var(--white);border-radius:24px 24px 0 0;padding:22px 18px;width:100%;max-width:500px;border-top:2px solid var(--greenlb);animation:slideup .25s ease;box-shadow:0 -8px 32px rgba(0,0,0,.12);}
+@keyframes slideup{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.mhandle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;}
+.modal-t{font-size:16px;font-weight:900;margin-bottom:3px;color:var(--text);}
+.modal-s{font-size:13px;color:var(--text3);margin-bottom:14px;font-weight:600;}
+.airesbox{background:var(--purplel);border:1.5px solid #c9b8f0;border-radius:12px;padding:13px;margin-bottom:12px;}
+.arrow{display:flex;align-items:center;margin-bottom:6px;}
+.arrow:last-child{margin-bottom:0;}
+.arl{font-size:12px;color:var(--text2);font-weight:700;width:75px;flex-shrink:0;}
+.arv{font-size:13px;font-weight:800;color:var(--purple);}
+.arbar{flex:1;height:6px;background:#e0d6f8;border-radius:3px;margin:0 8px;overflow:hidden;}
+.arfill{height:100%;background:var(--purple);border-radius:3px;transition:width .5s;}
+.mok{width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:var(--r2);font-size:15px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;margin-bottom:8px;transition:all .2s;}
+.mok:hover{background:var(--green2);}
+.mok:disabled{opacity:.5;cursor:not-allowed;}
+.msk{width:100%;padding:11px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r2);font-size:14px;cursor:pointer;color:var(--text2);font-family:'Nunito',sans-serif;font-weight:700;}
+.confwarn{background:var(--sunl);border:1.5px solid #ffd280;border-radius:10px;padding:11px 13px;margin-bottom:12px;font-size:13px;color:#8a5e00;line-height:1.5;font-weight:600;}
+.confphoto{border:2.5px dashed #ffd280;border-radius:12px;cursor:pointer;overflow:hidden;background:var(--sunl);margin-bottom:11px;transition:all .2s;}
+.confphoto:hover{border-color:var(--sun);}
+.confph{padding:22px;text-align:center;}
+.confph-em{font-size:30px;margin-bottom:6px;}
+.confph-t{font-size:14px;color:var(--sun);font-weight:700;}
+.confph-s{font-size:12px;color:var(--text3);margin-top:2px;font-weight:600;}
+#confprvimg{width:100%;max-height:150px;object-fit:cover;display:none;border-radius:10px;}
+
+/* ===== ACHIEVEMENT ===== */
+.achbg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9500;display:none;align-items:center;justify-content:center;}
+.achbg.on{display:flex;}
+.achbox{background:var(--white);border-radius:24px;padding:30px 24px;text-align:center;width:88%;max-width:270px;border:3px solid var(--green);animation:pop .4s cubic-bezier(.175,.885,.32,1.275);box-shadow:0 16px 48px rgba(45,158,95,.25);}
+@keyframes pop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+.ach-em{font-size:60px;margin-bottom:8px;display:block;}
+.ach-t{font-size:20px;font-weight:900;margin-bottom:5px;color:var(--text);}
+.ach-s{font-size:14px;color:var(--text2);line-height:1.5;margin-bottom:18px;font-weight:600;}
+.ach-cls{padding:12px 28px;background:var(--green);color:#fff;border:none;border-radius:var(--r2);font-size:15px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .2s;}
+.ach-cls:hover{background:var(--green2);}
+
+/* ===== UTILS ===== */
+.spinw{text-align:center;padding:40px;}
+.spin{width:28px;height:28px;border:3px solid var(--greenlb);border-top-color:var(--green);border-radius:50%;animation:sp .8s linear infinite;margin:0 auto 8px;}
+@keyframes sp{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:40px 16px;}
+.empty-em{font-size:44px;margin-bottom:10px;}
+.empty-t{font-size:15px;font-weight:700;color:var(--text3);}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:11px 20px;border-radius:24px;font-size:14px;font-weight:700;display:none;z-index:9999;white-space:nowrap;max-width:90vw;box-shadow:0 4px 20px rgba(0,0,0,.25);}
+.toast.on{display:flex;align-items:center;gap:6px;animation:fa .25s ease;}
+
+@media(max-width:400px){
+  .sbar{grid-template-columns:repeat(2,1fr);}
+  .si:nth-child(3),.si:nth-child(4){border-top:2px solid var(--greenlb);}
+  .dgrid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="authWrap">
+  <div class="auth-card">
+    <div class="auth-top">
+      <span class="auth-emoji">🌿</span>
+      <div class="auth-name">Eco<em>Map</em></div>
+      <div class="auth-city">Nukus · Qaraqalpaqstan</div>
+    </div>
+    <div class="a-tabs">
+      <div class="a-tab on" onclick="aTab('login',this)" data-kaa="Kiriw" data-uz="Kirish">Kiriw</div>
+      <div class="a-tab" onclick="aTab('reg',this)" data-kaa="Dizimge alınıw" data-uz="Ro'yxatdan o'tish">Dizimge alınıw</div>
+    </div>
+    <div id="aErr" class="a-err"></div>
+    <div id="loginF">
+      <label class="a-lbl">Email</label>
+      <input class="a-inp" id="lEm" type="email" placeholder="email@gmail.com"/>
+      <label class="a-lbl" data-kaa="Parol" data-uz="Parol">Parol</label>
+      <input class="a-inp" id="lPw" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+      <button class="a-btn" onclick="doLogin()" data-kaa="Kiriw →" data-uz="Kirish →">Kiriw →</button>
+      <div class="a-or"><span data-kaa="yamasa" data-uz="yoki">yamasa</span></div>
+      <button class="g-btn" onclick="doGoogle()">
+        <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        <span data-kaa="Google menen kiriw" data-uz="Google bilan kirish">Google menen kiriw</span>
+      </button>
+      <div class="a-skip" onclick="skipAuth()" data-kaa="Dizimge alınbay kiriwdi dawam etiw →" data-uz="Ro'yxatsiz davom etish →">Dizimge alınbay kiriwdi dawam etiw →</div>
+    </div>
+    <div id="regF" style="display:none">
+      <label class="a-lbl" data-kaa="Isiminiz *" data-uz="Ismingiz *">Isiminiz *</label>
+      <input class="a-inp" id="rNm" placeholder="Alibek Júsinov"/>
+      <label class="a-lbl">Email *</label>
+      <input class="a-inp" id="rEm" type="email" placeholder="email@gmail.com"/>
+      <label class="a-lbl" data-kaa="Parol *" data-uz="Parol *">Parol *</label>
+      <input class="a-inp" id="rPw" type="password" placeholder="Keminde 6 belgili" onkeydown="if(event.key==='Enter')doReg()"/>
+      <button class="a-btn" onclick="doReg()" data-kaa="Dizimge alınıw →" data-uz="Ro'yxatdan o'tish →">Dizimge alınıw →</button>
+      <div class="a-or"><span data-kaa="yamasa" data-uz="yoki">yamasa</span></div>
+      <button class="g-btn" onclick="doGoogle()">
+        <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        <span data-kaa="Google menen dizimge alınıw" data-uz="Google bilan ro'yxatdan o'tish">Google menen dizimge alınıw</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="hlogo">
+      <div class="hlogo-ic">🌿</div>
+      <div>
+        <div class="hlogo-tx">Eco<em>Map</em></div>
+        <div class="hlogo-sub" data-kaa="Nukus · Qaraqalpaqstan" data-uz="Nukus · Qoraqalpog'iston">Nukus · Qaraqalpaqstan</div>
+      </div>
+    </div>
+    <div class="hright">
+      <div class="lang-sw">
+        <div class="lsw on" id="btnKaa" onclick="setLang('kaa')">QQ</div>
+        <div class="lsw" id="btnUz" onclick="setLang('uz')">UZ</div>
+      </div>
+      <div class="live-pill">
+        <div class="ldot" id="ldot"></div>
+        <span class="ltxt" id="ltxt">—</span>
+      </div>
+      <div class="uav" id="uav" onclick="sw('profile',document.querySelector('[data-t=profile]'))">?</div>
+    </div>
+  </header>
+
+  <div class="sbar">
+    <div class="si"><div class="si-n" id="sTot">0</div><div class="si-l" data-kaa="Xabar" data-uz="Xabar">Xabar</div></div>
+    <div class="si"><div class="si-n" id="sSolv">0</div><div class="si-l" data-kaa="Tazalandi" data-uz="Tozalandi">Tazalandi</div></div>
+    <div class="si"><div class="si-n" id="sPend">0</div><div class="si-l" data-kaa="Kútiw" data-uz="Kutish">Kútiw</div></div>
+    <div class="si"><div class="si-n" id="sUsers">0</div><div class="si-l" data-kaa="Qatnasıwshı" data-uz="Ishtirokchi">Qatnasıwshı</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tb on" data-t="map" onclick="sw('map',this)" data-kaa="🗺 Karta" data-uz="🗺 Xarita">🗺 Karta</button>
+    <button class="tb" data-t="list" onclick="sw('list',this)" data-kaa="📋 Dizim" data-uz="📋 Ro'yxat">📋 Dizim</button>
+    <button class="tb" data-t="report" onclick="sw('report',this)" data-kaa="📢 Xabar beriw" data-uz="📢 Xabar berish">📢 Xabar beriw</button>
+    <button class="tb" data-t="confirm" onclick="sw('confirm',this)">✅ Dálillew<span class="tbdot" id="cdot" style="display:none"></span></button>
+    <button class="tb" data-t="dashboard" onclick="sw('dashboard',this)" data-kaa="📊 Dashboard" data-uz="📊 Dashboard">📊 Dashboard</button>
+    <button class="tb" data-t="ai" onclick="sw('ai',this)" data-kaa="🤖 AI Chat" data-uz="🤖 AI Chat">🤖 AI Chat</button>
+    <button class="tb" data-t="rating" onclick="sw('rating',this)" data-kaa="🏆 Reyting" data-uz="🏆 Reyting">🏆 Reyting</button>
+    <button class="tb" data-t="centers" onclick="sw('centers',this)" data-kaa="🏢 Filiallar" data-uz="🏢 Markazlar">🏢 Filiallar</button>
+    <button class="tb" data-t="weather" onclick="sw('weather',this)" data-kaa="🌤️ Hawa" data-uz="🌤️ Havo">🌤️ Hawa</button>
+    <button class="tb" data-t="about" onclick="sw('about',this)" data-kaa="ℹ️ Haqqında" data-uz="ℹ️ Haqida">ℹ️ Haqqında</button>
+    <button class="tb" data-t="profile" onclick="sw('profile',this)" style="display:none" id="profTab">👤</button>
+  </div>
+
+  <!-- MAP -->
+  <div id="pn-map" class="pn on">
+    <div class="mflt">
+      <button class="mf on" onclick="mFlt('all',this)" data-kaa="Barlıǵı" data-uz="Barchasi">Barlıǵı</button>
+      <button class="mf" onclick="mFlt('open',this)" data-kaa="Ashıq" data-uz="Ochiq">Ashıq</button>
+      <button class="mf" onclick="mFlt('solved',this)" data-kaa="Tazalandı" data-uz="Tozalandi">Tazalandı</button>
+      <button class="mf" onclick="mFlt('wait',this)" data-kaa="Kútiw" data-uz="Kutish">Kútiw</button>
+      <button class="mf" onclick="mFlt('heat',this)" data-kaa="🔥 Qızıl zona" data-uz="🔥 Qizil zona">🔥 Qızıl zona</button>
+    </div>
+    <div id="map"></div>
+  </div>
+
+  <!-- LIST -->
+  <div id="pn-list" class="pn">
+    <div class="lw">
+      <div class="srchbox">
+        <span style="font-size:18px">🔍</span>
+        <input placeholder="Habar izlew..." id="srchInp" oninput="renderList(this.value)"/>
+      </div>
+      <div class="lfilts">
+        <button class="lf on" onclick="lFlt('all',this)" data-kaa="Barlıǵı" data-uz="Barchasi">Barlıǵı</button>
+        <button class="lf" onclick="lFlt('open',this)" data-kaa="Ashıq" data-uz="Ochiq">Ashıq</button>
+        <button class="lf" onclick="lFlt('solved',this)" data-kaa="Tazalandı" data-uz="Tozalandi">Tazalandı</button>
+        <button class="lf" onclick="lFlt('high',this)" data-kaa="🔴 Qawipli" data-uz="🔴 Xavfli">🔴 Qawipli</button>
+        <button class="lf" onclick="lFlt('mine',this)" data-kaa="👤 Meniń" data-uz="👤 Mening">👤 Meniń</button>
+      </div>
+      <div id="iList"><div class="spinw"><div class="spin"></div></div></div>
+    </div>
+  </div>
+
+  <!-- REPORT -->
+  <div id="pn-report" class="pn">
+    <div class="rw">
+      <div class="fg">
+        <label class="flbl" data-kaa="Qaldıq túri *" data-uz="Chiqindi turi *">Qaldıq túri *</label>
+        <div class="typegrid">
+          <div class="tybtn" onclick="sType(this,'Plastik')">♻️ Plastik</div>
+          <div class="tybtn" onclick="sType(this,'Uy qaldıqları')">🏠 Uy qaldıqları</div>
+          <div class="tybtn" onclick="sType(this,'Qurilıs')">🏗️ Qurilıs</div>
+          <div class="tybtn" onclick="sType(this,'Ximiyalıq')">⚗️ Ximiyalıq</div>
+          <div class="tybtn" onclick="sType(this,'Shısha')">🍾 Shısha</div>
+          <div class="tybtn" onclick="sType(this,'Basqa')">📦 Basqa</div>
+        </div>
+        <div class="aibadge on" id="aiBadge">🤖 <span data-kaa="Súwret júkleń — AI ózi anıqlaydı" data-uz="Rasm yuklang — Gemini AI o'zi aniqlaydI">Súwret júkleń — AI ózi anıqlaydı</span></div>
+      </div>
+      <div class="fg">
+        <label class="flbl" data-kaa="GPS Orın *" data-uz="GPS Joy *">GPS Orın *</label>
+        <button class="gpsbtn" onclick="useGPS()">📍 <span data-kaa="GPS arqalı orndi anıqlaw" data-uz="GPS orqali joyni aniqlash">GPS arqalı orndi anıqlaw</span></button>
+        <input class="tinp" id="locInp" placeholder="yamasa kósheni jazıń..."/>
+        <input type="hidden" id="latInp" value="42.4626"/>
+        <input type="hidden" id="lngInp" value="59.6166"/>
+      </div>
+      <div class="fg">
+        <label class="flbl" data-kaa="Dáreje" data-uz="Daraja">Dáreje</label>
+        <div class="prirow">
+          <div class="prib" onclick="sPri(this,'low')">🟢 <span data-kaa="Az" data-uz="Kam">Az</span></div>
+          <div class="prib" onclick="sPri(this,'mid')">🟡 <span data-kaa="Orta" data-uz="O'rta">Orta</span></div>
+          <div class="prib" onclick="sPri(this,'high')">🔴 <span data-kaa="Qawipli" data-uz="Xavfli">Qawipli</span></div>
+        </div>
+      </div>
+      <div class="fg">
+        <label class="flbl" data-kaa="Súwret *" data-uz="Rasm *">Súwret *</label>
+        <div class="photobox" onclick="document.getElementById('photoInp').click()">
+          <div class="ph-ph" id="phPh">
+            <div class="ph-em">📷</div>
+            <p class="ph-t" data-kaa="Súwret alıw ushın basıń" data-uz="Rasm olish uchun bosing">Súwret alıw ushın basıń</p>
+            <small class="ph-s" data-kaa="AI avtomatik anıqlaydı" data-uz="Gemini AI avtomatik aniqlaydI">AI avtomatik anıqlaydı</small>
+          </div>
+          <img id="prevImg"/>
+          <div class="progbar" id="progBar"><div class="progfill" id="progFill"></div></div>
+        </div>
+        <input type="file" id="photoInp" accept="image/*" style="display:none" onchange="onPhoto(this)"/>
+      </div>
+      <div class="fg">
+        <label class="flbl" data-kaa="Qosımsha magliwmat" data-uz="Qo'shimcha izoh">Qosımsha magliwmat</label>
+        <textarea class="tinp" id="descInp" rows="2" placeholder="Qısqasha aytıp ótiń..."></textarea>
+      </div>
+      <button class="subbtn" id="subBtn" onclick="submitReport()">
+        <span data-kaa="📢 Xabar jiberiw →" data-uz="📢 Xabar yuborish →">📢 Xabar jiberiw →</span>
+      </button>
+      <div style="height:20px"></div>
+    </div>
+  </div>
+
+  <!-- CONFIRM -->
+  <div id="pn-confirm" class="pn">
+    <div class="cfw">
+      <div class="cfbanner">
+        <div class="cfb-t" data-kaa="✅ Tazalanǵan jerlerdi tastiyqlaw" data-uz="✅ Tozalangan joylarni tasdiqlash">✅ Tazalanǵan jerlerdi tastiyqlaw</div>
+        <div class="cfb-s" data-kaa="Sol jerge barıp haqıyqattan taza ekenin súwretke alıp tastiyqlaw." data-uz="O'sha joyga borib haqiqatan toza ekanini rasmga olib tasdiqlang.">Sol jerge barıp haqıyqattan taza ekenin súwretke alıp tastiyqlaw.</div>
+      </div>
+      <div id="confList"><div class="spinw"><div class="spin"></div></div></div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="pn-dashboard" class="pn">
+    <div class="dw">
+      <div class="dgrid">
+        <div class="dcard">
+          <div class="dc-lbl">📊 <span data-kaa="Jámi xabar" data-uz="Jami xabar">Jámi xabar</span></div>
+          <div class="dc-val" id="dTot">0</div>
+          <div class="dc-sub" data-kaa="Barlıq waqıt ushın" data-uz="Barcha vaqt uchun">Barlıq waqıt ushın</div>
+        </div>
+        <div class="dcard">
+          <div class="dc-lbl">✅ <span data-kaa="Tazalaw %" data-uz="Tozalash %">Tazalaw %</span></div>
+          <div class="dc-val" id="dPct">0%</div>
+          <div class="dc-sub" style="color:var(--green);font-weight:700" id="dTrend">↑ Ósiwde</div>
+        </div>
+        <div class="dcard">
+          <div class="dc-lbl">🤖 <span data-kaa="AI analizi" data-uz="AI tahlil qilindi">AI analizi</span></div>
+          <div class="dc-val" id="dAi">0</div>
+          <div class="dc-sub">Gemini Vision</div>
+        </div>
+        <div class="dcard">
+          <div class="dc-lbl">🏅 <span data-kaa="Ay jeńimpazbı" data-uz="Oy g'olibi">Ay jeńimpazbı</span></div>
+          <div class="dc-win" id="dMonth">—</div>
+          <div class="dc-sub" data-kaa="Eń aktiv qatnasıwshı" data-uz="Eng faol ishtirokchi">Eń aktiv qatnasıwshı</div>
+        </div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-ttl">📊 <span data-kaa="Qaldıq túri boyınsha" data-uz="Chiqindi turi bo'yicha">Qaldıq túri boyınsha</span></div>
+        <div class="barchart" id="typeChart"></div>
+        <div style="height:24px"></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-ttl">🔥 <span data-kaa="AI: Qızıl zona analizlew" data-uz="AI: Qizil zona tahlil">AI: Qızıl zona analizlew</span></div>
+        <div class="ai-analysis" id="zoneAnalysis"><div class="spinw"><div class="spin"></div></div></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-ttl">📝 <span data-kaa="AI Aylıq Esabat" data-uz="AI Oylik Hisobot">AI Aylıq Esabat</span></div>
+        <div class="ai-analysis" id="monthReport"><div class="spinw"><div class="spin"></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI CHAT -->
+  <div id="pn-ai" class="pn">
+    <div class="chatwrap">
+      <div class="chatheader">
+        <div class="chatav">🤖</div>
+        <div>
+          <div class="chatnm" data-kaa="EcoMap ·  AI Kómekshi" data-uz="EcoMap · Gemini AI Yordamchi">EcoMap ·  AI Kómekshi</div>
+          <div class="chatst" data-kaa="● AI maslahat" data-uz="● Faol · gemini-2.5-flash">● AI maslahat</div>
+        </div>
+      </div>
+      <div class="chatmsgs" id="chatMsgs">
+        <div class="msg">
+          <div class="mav bot">🤖</div>
+          <div>
+            <div class="mbub bot" id="welcomeMsg">Assalawma Aleykum! Men  AI kómekshisimen. Ekologiya boyinsha sorawlariniz bolsa jiberin!</div>
+            <div class="mtime">Házir</div>
+          </div>
+        </div>
+      </div>
+      <div class="chatinpa">
+        <div class="chsugs">
+          <div class="csug" onclick="sug(this)" data-kaa="Plastik ziyani haqqinda ?" data-uz="Plastik zarari nima?">Plastik zararı?</div>
+          <div class="csug" onclick="sug(this)" data-kaa="Aral teńizi haqqında" data-uz="Orol dengizi haqida">Aral teńizi</div>
+          <div class="csug" onclick="sug(this)" data-kaa="Qaldıqtı qalay tazalaymız?" data-uz="Chiqindini qanday tozalaymiz?">Qaldıqtı qalay?</div>
+          <div class="csug" onclick="sug(this)" data-kaa="Ekologiya kúni qashan?" data-uz="Ekologiya kuni qachon?">Ekologiya kúni?</div>
+          <div class="csug" onclick="sug(this)" data-kaa="Plastiktı qayta óndirew" data-uz="Plastikni qayta ishlash">Qayta óndirew</div>
+        </div>
+        <div class="chatrow">
+          <input class="chatinp" id="chatInp" placeholder="Soraw jazıń..." onkeydown="if(event.key==='Enter')sendChat()"/>
+          <button class="chatsend" onclick="sendChat()">→</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RATING -->
+  <div id="pn-rating" class="pn">
+    <div class="ratw">
+      <div class="rstats">
+        <div class="rs"><div class="rs-n" id="rTot">0</div><div class="rs-l" data-kaa="Xabar" data-uz="Xabar">Xabar</div></div>
+        <div class="rs"><div class="rs-n" id="rPct">0%</div><div class="rs-l" data-kaa="Tazalandı" data-uz="Tozalandi">Tazalandı</div></div>
+        <div class="rs"><div class="rs-n" id="rU">0</div><div class="rs-l" data-kaa="Qatnasıwshı" data-uz="Ishtirokchi">Qatnasıwshı</div></div>
+      </div>
+      <div id="mwcard" class="mwcard" style="display:none">
+        <div class="mwic">🏅</div>
+        <div>
+          <div class="mw-ttl" data-kaa="Bu Aydıń Jeńimpazı 🎉" data-uz="Bu oyning g'olibi 🎉">Bu Aydıń Jeńimpazı 🎉</div>
+          <div class="mw-nm" id="mwNm">—</div>
+          <div class="mw-sb" id="mwSb">0 xabar</div>
+        </div>
+      </div>
+      <div class="seclbl" data-kaa="Darejeler" data-uz="Unvonlar">Darejeler</div>
+      <div class="badgegrid">
+        <div class="badgecard"><div class="badge-ic">🌱</div><div class="badge-nm" data-kaa="Baslanǵısh" data-uz="Boshlang'ich">Baslanǵısh</div><div class="badge-rq">1+ xabar</div></div>
+        <div class="badgecard"><div class="badge-ic">🌿</div><div class="badge-nm" data-kaa="Dos" data-uz="Do'st">Dos</div><div class="badge-rq">5+ xabar</div></div>
+        <div class="badgecard"><div class="badge-ic">🦅</div><div class="badge-nm" data-kaa="Qorǵawshı" data-uz="Qo'riqchi">Qorǵawshı</div><div class="badge-rq">15+ xabar</div></div>
+        <div class="badgecard"><div class="badge-ic">🏆</div><div class="badge-nm" data-kaa="Qahraman" data-uz="Qahramon">Qahraman</div><div class="badge-rq">30+ xabar</div></div>
+      </div>
+      <div class="seclbl" data-kaa="Aktiv qatnasıwshılar" data-uz="Eng faol ishtirokchilar">Aktiv qatnasıwshılar</div>
+      <div id="lb"><div class="spinw"><div class="spin"></div></div></div>
+    </div>
+  </div>
+
+  <!-- CENTERS -->
+  <div id="pn-centers" class="pn">
+    <div class="centw">
+      <input class="tinp" style="margin-bottom:12px" placeholder="🔍 Filial izlew..." oninput="fCenters(this.value)"/>
+      <div id="cList"></div>
+    </div>
+  </div>
+
+  <!-- HAWA / HAVO -->
+  <div id="pn-weather" class="pn">
+    <div style="padding:14px;max-width:580px;margin:0 auto;">
+      <!-- City selector -->
+      <div style="display:flex;gap:7px;margin-bottom:14px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;">
+        <button class="mf on" onclick="getWeather('Nukus',this)" id="wcNukus">Nukus</button>
+        <button class="mf" onclick="getWeather('Qoʻngʻirot',this)">Qońırat</button>
+        <button class="mf" onclick="getWeather('Moʻynoq',this)">Muynoq</button>
+        <button class="mf" onclick="getWeather('Xoʻjayli',this)">Xojeli</button>
+        <button class="mf" onclick="getWeather('Beruniy',this)">Beruniy</button>
+        <button class="mf" onclick="getWeather('Qanlikoʻl',this)">Qańlıkól</button>
+      </div>
+
+      <!-- Current weather card -->
+      <div id="weatherCard" style="background:linear-gradient(135deg,#e3f0fb,#e6f7ee);border:2px solid var(--greenlb);border-radius:22px;padding:22px;margin-bottom:12px;box-shadow:var(--sh2);">
+        <div style="text-align:center;padding:20px;">
+          <div class="spin"></div>
+          <div style="font-size:13px;color:var(--text3);margin-top:8px;" data-kaa="Yuklenmoqda..." data-uz="Yuklanmoqda...">Yuklenmoqda...</div>
+        </div>
+      </div>
+
+      <!-- AI ekologiya tavsiya -->
+      <div style="background:var(--white);border:2px solid var(--border);border-radius:var(--r);padding:14px;box-shadow:var(--sh);">
+        <div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+          🤖 <span data-kaa="AI Ekologiya Usinisi" data-uz="AI Ekologiya Tavsiyasi">AI Ekologiya Usinisi</span>
+        </div>
+        <div id="weatherAiTip" style="font-size:13px;color:var(--text2);line-height:1.8;font-weight:600;">
+          <div class="spinw"><div class="spin"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABOUT -->
+  <div id="pn-about" class="pn">
+    <div class="aboutw">
+      <div class="abouthero">
+        <span class="ah-em">🌿</span>
+        <div class="ah-t">EcoMap Nukus</div>
+        <div class="ah-s" data-kaa="Qaraqalpaqstanımızdıń tazalıǵı ushın AI kómegi menen birge isleymiz. Qaldıq kórseń — habar ber, birge tazalaymız!" data-uz="Qoraqalpog'istonimiz tozaligi uchun AI yordamida birga ishlaymiz!">Qaraqalpaqstanımızdıń tazalıǵı ushın AI kómegi menen birge isleymiz!</div>
+      </div>
+      <div class="tagpills">
+        <span class="tagpill">🤖 Jasalma intelekt AI</span>
+        
+      </div>
+      <div class="aboutcard">
+        <div class="ac-t">📱 <span data-kaa="Qalay paydalanıladı?" data-uz="Qanday ishlatiladi?">Qalay paydalanıladı?</span></div>
+        <div class="step"><div class="stepn">1</div><div class="stept" data-kaa="Qaldıq kórseniń — súwretke alıń" data-uz="Chiqindi ko'rsangiz — rasmga oling">Qaldıq kórseniń — súwretke alıń</div></div>
+        <div class="step"><div class="stepn">2</div><div class="stept" data-kaa=" AI qaldıq túrin ózi anıqlaydı" data-uz="Gemini AI chiqindi turini o'zi aniqlaydI">AI qaldıq túrin ózi anıqlaydı</div></div>
+        <div class="step"><div class="stepn">3</div><div class="stept" data-kaa="GPS basıp ornın anıqlań hám xabar jiberiń" data-uz="GPS bosib joyini aniqlab xabar yuboring">GPS basıp ornın anıqlań hám xabar jiberiń</div></div>
+        <div class="step"><div class="stepn">4</div><div class="stept" data-kaa="Tazalanǵan soń dálillew — dareje alıń" data-uz="Tozalangach tasdiqlang — unvon oling">Tazalanǵan soń dálillew — dareje alıń</div></div>
+        <div class="step"><div class="stepn">5</div><div class="stept" data-kaa="Ay jeńimpazi bolıń!" data-uz="Oy g'olibi bo'ling!">Ay jeńimpazi bolıń!</div></div>
+      </div>
+      <div class="aboutcard">
+        <div class="ac-t">🤖 AI</div>
+        <div class="acb" data-kaa="• AI: Súwretten qaldıq túrin anıqlaw&#10;• AI Chat: Ekologiya boyınsha sorawlar&#10;• Qızıl zona analizi&#10;• Aylıq esabat generatsiyası&#10;• Aktiv qatnasıwshı anıqlash" data-uz="• Gemini Vision: Rasmdan chiqindi turini aniqlash&#10;• AI Chat: Ekologiya bo'yicha savollar&#10;• Qizil zona bashorati&#10;• Oylik hisobot generatsiyasi&#10;• Faol ishtirokchi aniqlash">• Gemini Vision: Súwretten qaldıq túrin anıqlaw
+• AI Chat: Ekologiya boyınsha sorawlar
+• Qızıl zona analizlew
+• Aylıq esabat generatsiyası</div>
+      </div>
+      <div class="aboutcard">
+        <div class="ac-t">📞 <span data-kaa="Baylanıs" data-uz="Aloqa">Baylanıs</span></div>
+        <div class="acb">📱 +998 61 222 0011<br/>📧 ecomap.nukus@gmail.com<br/>📍 Nukus, Qaraqalpaqstan</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROFILE -->
+  <div id="pn-profile" class="pn">
+    <div class="profw">
+      <div class="profhero">
+        <div class="profav" id="pAv">?</div>
+        <div class="profnm" id="pNm">—</div>
+        <div class="profem" id="pEm">—</div>
+        <div class="profbdg" id="pBdg">🌱 Baslanǵısh</div>
+      </div>
+      <div class="profstats">
+        <div class="ps"><div class="psn" id="myTot">0</div><div class="psl" data-kaa="Xabar" data-uz="Xabar">Xabar</div></div>
+        <div class="ps"><div class="psn" id="mySolv">0</div><div class="psl" data-kaa="Tazalandi" data-uz="Tozalandi">Tazalandi</div></div>
+        <div class="ps"><div class="psn" id="myConf">0</div><div class="psl" data-kaa="Dálillendi" data-uz="Tasdiqlandi">Dálillendi</div></div>
+      </div>
+      <div class="profitem" onclick="sw('report',document.querySelector('[data-t=report]'))">
+        <div class="profic" style="background:var(--greenl)">📢</div>
+        <div class="proftx"><div class="proftx-t" data-kaa="Xabar beriw" data-uz="Xabar berish">Xabar beriw</div><div class="proftx-s" data-kaa="Jańa qaldıq xabarlaw" data-uz="Yangi chiqindi bildirish">Jańa qaldıq xabarlaw</div></div>
+      </div>
+      <div class="profitem" onclick="sw('dashboard',document.querySelector('[data-t=dashboard]'))">
+        <div class="profic" style="background:var(--bluel)">📊</div>
+        <div class="proftx"><div class="proftx-t" data-kaa="Statistika" data-uz="Statistika">Statistika</div><div class="proftx-s" data-kaa="AI tahlil hám esabatlar" data-uz="AI tahlil va hisobotlar">AI tahlil hám esabatlar</div></div>
+      </div>
+      <div class="profitem" onclick="sw('ai',document.querySelector('[data-t=ai]'))">
+        <div class="profic" style="background:var(--purplel)">🤖</div>
+        <div class="proftx"><div class="proftx-t" data-kaa="AI Kómekshi" data-uz="AI Yordamchi">AI Kómekshi</div><div class="proftx-s" data-kaa="AI menen maslahat" data-uz="Gemini AI bilan suhbatlas">AI menen maslahat</div></div>
+      </div>
+      <div class="logoutrow" onclick="doLogout()">
+        <span style="font-size:22px">🚪</span>
+        <span style="font-size:15px;font-weight:800;color:var(--red)" data-kaa="Shıǵıw" data-uz="Chiqish">Shıǵıw</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AI MODAL -->
+<div class="modalbg" id="aiModal">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="modal-t">🤖 Gemini AI Nátıyjesi</div>
+    <div class="modal-s" data-kaa="Gemini Vision súwretiňizdi tarawladı" data-uz="Gemini Vision rasmingizni tahlil qildi">Gemini Vision súwretiňizdi tarawladı</div>
+    <div class="airesbox">
+      <div class="arrow"><span class="arl" data-kaa="Qaldıq túri" data-uz="Tur">Qaldıq túri</span><span class="arv" id="aiType">—</span></div>
+      <div class="arrow"><span class="arl" data-kaa="Dáreje" data-uz="Daraja">Dáreje</span><span class="arv" id="aiPri">—</span></div>
+      <div class="arrow">
+        <span class="arl" data-kaa="Isenim" data-uz="Ishonch">Isenim</span>
+        <div class="arbar"><div class="arfill" id="aiBar"></div></div>
+        <span class="arv" id="aiPct">0%</span>
+      </div>
+      <div class="arrow"><span class="arl">AI pikiri</span><span class="arv" id="aiDesc" style="font-size:11px;max-width:130px;text-align:right">—</span></div>
+    </div>
+    <button class="mok" onclick="acceptAI()">✅ <span data-kaa="Qabıl etemen" data-uz="Qabul qilaman">Qabıl etemen</span></button>
+    <button class="msk" onclick="closeAI()"><span data-kaa="Ózimshe tańlayman" data-uz="O'zim tanlayman">Ózimshe tańlayman</span></button>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modalbg" id="confModal">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="modal-t">📸 <span data-kaa="Tazalanǵan jerdi dálillew" data-uz="Tozalangan joyni tasdiqlash">Tazalanǵan jerdi dálillew</span></div>
+    <div class="modal-s" data-kaa="Sol jerge barıp kóriń — taza bolsa súwret alıń." data-uz="O'sha joyga borib ko'ring — toza bo'lsa rasm oling.">Sol jerge barıp kóriń — taza bolsa súwret alıń.</div>
+    <div class="confwarn" data-kaa="⚠️ Nádurıs dálillegende darejeniz tómenleydi!" data-uz="⚠️ Noto'g'ri tasdiqlash unvoningizni tushiradi!">⚠️ Nádurıs dálillegende darejeniz tómenleydi!</div>
+    <div class="confphoto" onclick="document.getElementById('confPhInp').click()">
+      <div class="confph" id="confPhPh">
+        <div class="confph-em">📷</div>
+        <div class="confph-t" data-kaa="Taza jerdiń súwretin alıń" data-uz="Toza joyning rasmini oling">Taza jerdiń súwretin alıń</div>
+        <div class="confph-s" data-kaa="Bul dálillewdiń belgisi" data-uz="Bu tasdiqning belgisi">Bul dálillewdiń belgisi</div>
+      </div>
+      <img id="confprvimg"/>
+    </div>
+    <input type="file" id="confPhInp" accept="image/*" style="display:none" onchange="onConfPh(this)"/>
+    <button class="mok" id="confOkBtn" onclick="submitConf()">✅ <span data-kaa="Tastiyqlayman" data-uz="Tasdiqlayman">Tastiyqlayman</span></button>
+    <button class="msk" onclick="closeConf()"><span data-kaa="Artqa" data-uz="Orqaga">Artqa</span></button>
+  </div>
+</div>
+
+<!-- ACHIEVEMENT -->
+<div class="achbg" id="achBg">
+  <div class="achbox">
+    <span class="ach-em" id="achEm">🏆</span>
+    <div class="ach-t" id="achT">Ajayip!</div>
+    <div class="ach-s" id="achS">Tabiyatqa óz paydańızdı qostıńız!</div>
+    <button class="ach-cls" onclick="document.getElementById('achBg').classList.remove('on')" data-kaa="Raxmet! 🌿" data-uz="Rahmat! 🌿">Raxmet! 🌿</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+
+const CFG = {
+  geminiKey: 'AIzaSyBGdDnZYtXIs858rGJT9Mks_vIHEAkE_RE',
+  cloudName: 'druiinnxa',
+  uploadPreset: 'lbk3l563',
+  supabaseUrl: 'https://hnftvykdczrwijajtcpx.supabase.co',
+supabaseKey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhuZnR2eWtkY3pyd2lqYWp0Y3B4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2MDAwNjcsImV4cCI6MjA4OTE3NjA2N30._J3Lk_TskS8lby46NJ0IsDds9coNe8U-cWxWmZx9d0Q',
+};
+
+// Foydalanuvchi o'z kalitlarini shu yerga kiriting:
+// CFG.geminiKey = 'AIzaSy...';
+// CFG.supabaseUrl = 'https://xxx.supabase.co';
+// CFG.supabaseKey = 'sb_publishable_...';
+// CFG.cloudName = 'my-cloud';
+// CFG.uploadPreset = 'lbk3l563';
+
+// STATE
+let issues=[],CU=null,map=null,MKS={},
+    curType='',curPri='mid',photoFile=null,aiData=null,
+    confId=null,confPhoto=null,mFltCur='all',lFltCur='all',lang='kaa';
+
+const DEMO=[
+  {id:'d1',type:'Plastik',addr:'Sarıqtash kóshesi, 14',lat:42.468,lng:59.612,priority:'mid',author:'Gulsanam A.',authorEmail:'g@t.com',resolved:false,confirmed:false,time:Date.now()-10800000,imageUrl:'',aiDetected:true},
+  {id:'d2',type:'Ximiyalıq',addr:'Ámudarya kóshesi, 3',lat:42.455,lng:59.622,priority:'high',author:'Marat J.',authorEmail:'m@t.com',resolved:false,confirmed:false,time:Date.now()-86400000,imageUrl:'',aiDetected:false},
+  {id:'d3',type:'Uy qaldıqları',addr:'Bazarǵa jaqın',lat:42.472,lng:59.608,priority:'mid',author:'Feruza K.',authorEmail:'f@t.com',resolved:true,confirmed:false,time:Date.now()-18000000,imageUrl:'',aiDetected:true},
+  {id:'d4',type:'Plastik',addr:'Berdaq kóshesi, 7',lat:42.460,lng:59.618,priority:'low',author:'Alibek N.',authorEmail:'a@t.com',resolved:true,confirmed:true,time:Date.now()-172800000,imageUrl:'',aiDetected:false},
+  {id:'d5',type:'Shısha',addr:'Mustaqıllıq k., 22',lat:42.465,lng:59.614,priority:'low',author:'Dilnoza T.',authorEmail:'d@t.com',resolved:false,confirmed:false,time:Date.now()-3600000,imageUrl:'',aiDetected:true},
+  {id:'d6',type:'Qurilıs',addr:'Jańa shahar, 5-kósha',lat:42.450,lng:59.608,priority:'high',author:'Baxtiyar S.',authorEmail:'b@t.com',resolved:false,confirmed:false,time:Date.now()-7200000,imageUrl:'',aiDetected:true},
+  {id:'d7',type:'Plastik',addr:'Nukus bazar atıraplaması',lat:42.461,lng:59.623,priority:'mid',author:'Gulsanam A.',authorEmail:'g@t.com',resolved:true,confirmed:true,time:Date.now()-259200000,imageUrl:'',aiDetected:false},
+];
+
+const CENTERS=[
+  {name:'Nukus Ekologiya Orayı',addr:'Mustaqıllıq k., 12',dist:'1.2 km',icon:'🌿',hours:'Du–Ju: 9:00–18:00',tags:['Plastik','Shısha','Qaǵaz'],phone:'+998612223344',lat:42.474,lng:59.615},
+  {name:'Ámudarya Qayta Isleŵ',addr:'Qaraqalpaqstan k., 45',dist:'2.8 km',icon:'♻️',hours:'Du–Sh: 8:00–17:00',tags:['Metal','Elektron'],phone:'+998612334455',lat:42.450,lng:59.625},
+  {name:'Aral Teńizi Qorǵaw Fondi',addr:'Berdaq k., 7',dist:'0.6 km',icon:'🌊',hours:'Du–Ju: 9:00–17:00',tags:['Ekologiya','Keńes'],phone:'+998612445566',lat:42.462,lng:59.618},
+  {name:'Tazalıq Komissiyası',addr:'Ózbekstan k., 33',dist:'3.1 km',icon:'🏛️',hours:'Du–Ju: 9:00–18:00',tags:['Resmiy habar'],phone:'+998612556677',lat:42.440,lng:59.610},
+  {name:'Jasıl Nukus',addr:'Lenin k., 18',dist:'1.8 km',icon:'🌱',hours:'Du–Sh: 10:00–17:00',tags:['Erkingúller','Aksiya'],phone:'+998612667788',lat:42.470,lng:59.620},
+];
+
+const BADGES=[
+  {min:30,ic:'🏆',name:'Ekologiya Qahramanı',msg:'30 habar — siz haqıyqıy qahraman!'},
+  {min:15,ic:'🦅',name:'Aral Qorǵawshısı',msg:'15 habar — Aral ushın gúresiwshisiz!'},
+  {min:5,ic:'🌿',name:'Ekologiya Dosti',msg:'5 habar — siz haqıyqıy dostsız!'},
+  {min:1,ic:'🌱',name:'Jasıl Baslanǵısh',msg:'Birinshi xabarıńız jiberildi!'},
+];
+const TIC={Plastik:'♻️','Uy qaldıqları':'🗑️',Qurilıs:'🏗️',Ximiyalıq:'⚗️',Shısha:'🍾',Basqa:'📦'};
+
+// SUPABASE
+const sbF=(p,o={})=>fetch(CFG.supabaseUrl+'/rest/v1/'+p,{...o,headers:{'apikey':CFG.supabaseKey,'Authorization':'Bearer '+CFG.supabaseKey,'Content-Type':'application/json','Prefer':o.pref||'return=representation'}}).then(async r=>{const t=await r.text();if(!r.ok){console.error('Supabase error:',t);return[];}return t?JSON.parse(t):[];});
+
+// Supabase dan kelgan ma'lumotni normalize qilish
+function normalizeIssue(i){
+  return {
+    id: i.id,
+    type: i.type||'Basqa',
+    addr: i.addr||'',
+    desc: i.description||i.desc||'',
+    lat: parseFloat(i.lat)||42.4626,
+    lng: parseFloat(i.lng)||59.6166,
+    priority: i.priority||'mid',
+    author: i.author||'Anonim',
+    authorEmail: i.authorEmail||i["authorEmail"]||'',
+    resolved: i.resolved||false,
+    confirmed: i.confirmed||false,
+    time: parseInt(i.time)||Date.now(),
+    imageUrl: i.imageUrl||i["imageUrl"]||'',
+    confImageUrl: i.confImageUrl||i["confImageUrl"]||'',
+    aiDetected: i.aiDetected||i["aiDetected"]||false,
+  };
+}
+
+const dbLoad=async()=>{
+  const data=await sbF('issues?order=time.desc&select=*');
+  return Array.isArray(data)?data.map(normalizeIssue):[];
+};
+const dbAdd=d=>sbF('issues',{method:'POST',body:JSON.stringify(d)});
+const dbPatch=(id,d)=>sbF('issues?id=eq.'+id,{method:'PATCH',body:JSON.stringify(d),pref:'return=minimal'});
+
+// AUTH
+function getUs(){try{return JSON.parse(localStorage.getItem('em_u')||'{}');}catch(e){return{};}}
+function saveUs(u){localStorage.setItem('em_u',JSON.stringify(u));}
+function hash(s){let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return h.toString(36);}
+function aTab(t,el){
+  document.querySelectorAll('.a-tab').forEach(x=>x.classList.remove('on'));el.classList.add('on');
+  document.getElementById('loginF').style.display=t==='login'?'block':'none';
+  document.getElementById('regF').style.display=t==='reg'?'block':'none';
+  document.getElementById('aErr').classList.remove('on');
+}
+function aErr(m){const e=document.getElementById('aErr');e.textContent=m;e.classList.add('on');}
+function doLogin(){
+  const em=document.getElementById('lEm').value.trim(),pw=document.getElementById('lPw').value;
+  if(!em||!pw){aErr(lang==='kaa'?'Email hám paroldi kiritiń':'Email va parolni kiriting');return;}
+  const u=getUs()[em];
+  if(!u){aErr(lang==='kaa'?'Foydalanıwshı tabılmadı':'Foydalanuvchi topilmadi');return;}
+  if(u.passHash!==hash(pw)){aErr(lang==='kaa'?'Parol nádurıs':'Parol noto\'g\'ri');return;}
+  loginUser(u);
+}
+function doReg(){
+  const nm=document.getElementById('rNm').value.trim(),em=document.getElementById('rEm').value.trim(),pw=document.getElementById('rPw').value;
+  if(!nm){aErr(lang==='kaa'?'Isimnizni kiritiń':'Ismingizni kiriting');return;}
+  if(!em||!em.includes('@')){aErr('Email nádurıs');return;}
+  if(pw.length<6){aErr(lang==='kaa'?'Parol keminde 6 belgili':'Parol kamida 6 belgili');return;}
+  const us=getUs();
+  if(us[em]){aErr(lang==='kaa'?'Bul email aldın dizimge alınǵan':'Bu email allaqachon ro\'yxatdan o\'tgan');return;}
+  const u={email:em,name:nm,passHash:hash(pw),joinDate:Date.now()};
+  us[em]=u;saveUs(us);loginUser(u);
+}
+function doGoogle(){loginUser({email:'google@gmail.com',name:'Google Qatnasıwshı',joinDate:Date.now()});toast('🔑 Google (demo)');}
+function skipAuth(){loginUser({email:'',name:lang==='kaa'?'Mehman':'Mehmon',joinDate:Date.now(),isGuest:true});}
+function loginUser(u){
+  CU=u;localStorage.setItem('em_ses',JSON.stringify(u));
+  document.getElementById('authWrap').classList.add('gone');
+  updateUserUI();toast('✅ '+(lang==='kaa'?'Xosh kelipsiź, ':'Xush kelibsiz, ')+u.name+'!');
+}
+function doLogout(){
+  if(!confirm(lang==='kaa'?'Shıǵıwdı qálew sizdemi?':'Chiqmoqchimisiz?'))return;
+  CU=null;localStorage.removeItem('em_ses');
+  document.getElementById('authWrap').classList.remove('gone');
+  document.getElementById('uav').textContent='?';
+}
+function updateUserUI(){
+  if(!CU)return;
+  const ini=CU.name?CU.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2):'?';
+  document.getElementById('uav').textContent=ini;
+  document.getElementById('pAv').textContent=ini;
+  document.getElementById('pNm').textContent=CU.name||'—';
+  document.getElementById('pEm').textContent=CU.email||'Mehmon';
+  document.getElementById('profTab').style.display='block';
+}
+
+// INIT
+window.addEventListener('load',async()=>{
+  try{const s=localStorage.getItem('em_ses');if(s){CU=JSON.parse(s);updateUserUI();document.getElementById('authWrap').classList.add('gone');}}catch(e){}
+  await loadData();setInterval(loadData,8000);
+  initMap();renderCenters('');
+});
+async function loadData(){
+  try{
+    issues=CFG.supabaseUrl!=='YOUR_SUPABASE_URL'?await dbLoad():DEMO;
+    document.getElementById('ldot').classList.add('on');
+    document.getElementById('ltxt').textContent=CFG.supabaseUrl!=='YOUR_SUPABASE_URL'?'JONLÍ':'DEMO';
+    updateStats();renderMKS();
+    renderList(document.getElementById('srchInp')?.value||'');
+    renderConfList();renderLB();
+    if(document.getElementById('pn-dashboard').classList.contains('on'))renderDashboard();
+    if(CU)renderProfile();
+  }catch(e){document.getElementById('ldot').classList.remove('on');document.getElementById('ltxt').textContent='OFFLINE';}
+}
+
+// STATS
+function updateStats(){
+  const tot=issues.length,solv=issues.filter(i=>i.confirmed).length,
+        pend=issues.filter(i=>i.resolved&&!i.confirmed).length,
+        u=new Set(issues.map(i=>i.authorEmail).filter(Boolean)).size;
+  document.getElementById('sTot').textContent=tot;
+  document.getElementById('sSolv').textContent=solv;
+  document.getElementById('sPend').textContent=pend;
+  document.getElementById('sUsers').textContent=u;
+  document.getElementById('rTot').textContent=tot;
+  document.getElementById('rPct').textContent=tot?Math.round(solv/tot*100)+'%':'0%';
+  document.getElementById('rU').textContent=u;
+  document.getElementById('cdot').style.display=pend>0?'inline-block':'none';
+}
+
+// MAP
+function initMap(){
+  if(map){map.remove();map=null;}
+  map=L.map('map').setView([42.4626,59.6166],13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(map);
+  renderMKS();
+}
+function mkIcon(color,lbl,sz=38){
+  return L.divIcon({className:'',html:`<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${color};border:3px solid #fff;box-shadow:0 3px 12px rgba(0,0,0,.25),0 0 0 3px ${color}30;display:flex;align-items:center;justify-content:center;font-size:${Math.floor(sz*.36)}px;color:#fff;font-weight:900;">${lbl}</div>`,iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],popupAnchor:[0,-sz/2-5]});
+}
+function renderMKS(){
+  if(!map)return;
+  Object.values(MKS).forEach(m=>{try{map.removeLayer(m);}catch(e){}});MKS={};
+  if(mFltCur==='heat'){
+    issues.forEach(i=>{const c=L.circleMarker([i.lat,i.lng],{radius:32,color:'transparent',fillColor:'#e84c4c',fillOpacity:.22,interactive:false}).addTo(map);MKS['h'+i.id]=c;});
+  }
+  const flt=issues.filter(i=>mFltCur==='open'?!i.resolved:mFltCur==='solved'?i.confirmed:mFltCur==='wait'?(i.resolved&&!i.confirmed):true);
+  flt.forEach(i=>{
+    const col=i.confirmed?'#2d9e5f':i.resolved?'#f4a621':i.priority==='high'?'#e84c4c':i.priority==='low'?'#3a86d4':'#f4a621';
+    const lbl=i.confirmed?'✓':i.resolved?'⏳':'!';
+    const mk=L.marker([i.lat,i.lng],{icon:mkIcon(col,lbl)}).addTo(map);
+    const img=i.imageUrl?`<img src="${i.imageUrl}" class="pp-img"/>`:`<div class="pp-ico">${TIC[i.type]||'📍'}</div>`;
+    let act='';
+    if(i.confirmed)act=`<div class="pp-done">✅ Tastiyqlandi!</div>`;
+    else if(i.resolved)act=`<button class="pp-wait" onclick="openConf('${i.id}')">📸 Dálillew</button>`;
+    else act=`<button class="pp-btn" onclick="markRes('${i.id}')">✓ Tazalandı dep belgilew</button>`;
+    mk.bindPopup(`<div class="pp">${img}<div class="pp-badge">${TIC[i.type]||'📍'} ${i.type}${i.aiDetected?' · 🤖':''}</div><div class="pp-addr">${i.addr}</div><div class="pp-meta">👤 ${i.author||'Anonim'}<br/>🕐 ${ago(i.time)}</div>${act}</div>`);
+    MKS[i.id]=mk;
+  });
+  CENTERS.forEach((c,idx)=>{
+    const mk=L.marker([c.lat,c.lng],{icon:mkIcon('#3a86d4','M',30)}).addTo(map);
+    mk.bindPopup(`<div class="pp"><div class="pp-badge">🏢 Filial</div><div class="pp-addr">${c.icon} ${c.name}</div><div class="pp-meta">📍 ${c.addr}<br/>🕐 ${c.hours}</div><a href="tel:${c.phone}" class="pp-btn" style="display:block;text-align:center;text-decoration:none">📞 Qońıraw</a></div>`);
+    MKS['c'+idx]=mk;
+  });
+}
+function mFlt(f,el){mFltCur=f;document.querySelectorAll('.mf').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderMKS();}
+async function markRes(id){
+  if(CFG.supabaseUrl!=='YOUR_SUPABASE_URL'){await dbPatch(id,{resolved:true});await loadData();}
+  else{const i=issues.find(x=>x.id===id);if(i){i.resolved=true;}updateStats();renderMKS();renderConfList();}
+  map.closePopup();toast('✅ '+(lang==='kaa'?'Belgilendi! Dálillew bólimine qarań.':'Belgilandi! Tasdiqlash bo\'limiga qarang.'));
+}
+
+// LIST
+function lFlt(f,el){lFltCur=f;document.querySelectorAll('.lf').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderList(document.getElementById('srchInp').value);}
+function renderList(q=''){
+  const el=document.getElementById('iList');
+  const list=issues.filter(i=>{
+    const m=(i.type+i.addr+i.author).toLowerCase().includes(q.toLowerCase());
+    if(!m)return false;
+    return lFltCur==='open'?!i.resolved:lFltCur==='solved'?i.confirmed:lFltCur==='high'?i.priority==='high':lFltCur==='mine'?(CU&&i.authorEmail===CU.email):true;
+  });
+  if(!list.length){el.innerHTML=`<div class="empty"><div class="empty-em">🔍</div><div class="empty-t">${lang==='kaa'?'Nátiyjе tabılmadı':'Natija topilmadi'}</div></div>`;return;}
+  el.innerHTML=list.map(i=>{
+    const dc=i.confirmed?'#2d9e5f':i.resolved?'#f4a621':'#e84c4c';
+    const th=i.imageUrl?`<img src="${i.imageUrl}" class="icard-img"/>`:`<div class="icard-ico">${TIC[i.type]||'📍'}</div>`;
+    const tags=[
+      i.confirmed?`<span class="itag" style="background:#e6f7ee;color:#2d9e5f">✅ Tazalandı</span>`:
+      i.resolved?`<span class="itag" style="background:#fff3dc;color:#c47f00">⏳ Kútiw</span>`:
+      i.priority==='high'?`<span class="itag" style="background:#fdeaea;color:#e84c4c">🔴 Qawipli</span>`:'',
+      i.aiDetected?`<span class="itag" style="background:#f0ebff;color:#7c5cbf">🤖 AI</span>`:'',
+      (CU&&i.authorEmail===CU.email)?`<span class="itag" style="background:#e3f0fb;color:#3a86d4">👤</span>`:''
+    ].join('');
+    return `<div class="icard" onclick="focusI('${i.id}')">${th}<div class="icard-body"><div class="icard-type">${i.type}</div><div class="icard-addr">${i.addr}</div><div class="icard-meta">👤 ${i.author||'Anonim'} · ${ago(i.time)}</div><div class="icard-tags">${tags}</div></div><div class="idot" style="background:${dc}"></div></div>`;
+  }).join('');
+}
+function focusI(id){
+  const i=issues.find(x=>x.id===id);if(!i)return;
+  sw('map',document.querySelector('[data-t=map]'));
+  setTimeout(()=>{map.setView([i.lat,i.lng],16);if(MKS[id])MKS[id].openPopup();},150);
+}
+
+// REPORT
+function sType(el,t){document.querySelectorAll('.tybtn').forEach(b=>b.classList.remove('on'));el.classList.add('on');curType=t;}
+function sPri(el,p){document.querySelectorAll('.prib').forEach(b=>b.classList.remove('low','mid','high'));el.classList.add(p);curPri=p;}
+function useGPS(){
+  if(!navigator.geolocation){toast(lang==='kaa'?'GPS islemeydı':'GPS ishlamaydi');return;}
+  toast('📍 '+(lang==='kaa'?'Ornı anıqlawda...':'Aniqlanmoqda...'));
+  navigator.geolocation.getCurrentPosition(p=>{
+    const la=p.coords.latitude.toFixed(5),ln=p.coords.longitude.toFixed(5);
+    document.getElementById('locInp').value=`${la}, ${ln}`;
+    document.getElementById('latInp').value=la;document.getElementById('lngInp').value=ln;
+    if(map)map.setView([la,ln],15);
+    toast('✅ '+(lang==='kaa'?'Orın anıqlandı!':'Joy aniqlandi!'));
+  },()=>toast('❗ '+(lang==='kaa'?'GPS ruxsatın beriń':'GPS ruxsatini bering')));
+}
+
+// GEMINI VISION
+async function analyzeWithGemini(file){
+  if(CFG.geminiKey==='YOUR_GEMINI_API_KEY'){
+    await new Promise(r=>setTimeout(r,1200));
+    const types=['Plastik','Uy qaldıqları','Shısha','Ximiyalıq','Qurilıs'];
+    return{type:types[Math.floor(Math.random()*types.length)],priority:['low','mid','high'][Math.floor(Math.random()*3)],confidence:Math.floor(72+Math.random()*26),comment:'Demo rejimida Gemini tahlil.'};
+  }
+  try{
+    const b64=await new Promise((r,j)=>{const fr=new FileReader();fr.onload=e=>r(e.target.result.split(',')[1]);fr.onerror=j;fr.readAsDataURL(file);});
+    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${CFG.geminiKey}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{inline_data:{mime_type:file.type||'image/jpeg',data:b64}},{text:'Bul súwrettegi qaldıq/ekologiya mashqalanı tarawla. TEK JSON: {"type":"Plastik|Uy qaldıqları|Qurilıs|Ximiyalıq|Shısha|Basqa","priority":"low|mid|high","confidence":0-100,"comment":"qısqa izoh"}'}]}]})
+    });
+    const d=await resp.json();
+    return JSON.parse(d.candidates?.[0]?.content?.parts?.[0]?.text?.replace(/```json|```/g,'').trim());
+  }catch(e){return null;}
+}
+async function onPhoto(inp){
+  if(!inp.files?.[0])return;
+  const file=inp.files[0];
+  if(file.size>10*1024*1024){toast('❗ '+(lang==='kaa'?'Súwret 10MB den kishi bolsın':'Rasm 10MB dan kichik bo\'lsin'));return;}
+  photoFile=file;
+  const fr=new FileReader();
+  fr.onload=e=>{document.getElementById('prevImg').src=e.target.result;document.getElementById('prevImg').style.display='block';document.getElementById('phPh').style.display='none';};
+  fr.readAsDataURL(file);
+  document.getElementById('aiBadge').innerHTML='⏳ Gemini AI tarawlawda...';document.getElementById('aiBadge').classList.add('on');
+  const res=await analyzeWithGemini(file);
+  if(res){
+    aiData=res;
+    document.getElementById('aiBadge').innerHTML=`🤖 Gemini: ${res.type} — ${res.confidence}% isenim`;
+    document.getElementById('aiType').textContent=res.type;
+    document.getElementById('aiPri').textContent=res.priority==='high'?'🔴 Qawipli':res.priority==='mid'?'🟡 Orta':'🟢 Az';
+    document.getElementById('aiPct').textContent=res.confidence+'%';
+    document.getElementById('aiBar').style.width=res.confidence+'%';
+    document.getElementById('aiDesc').textContent=res.comment||'—';
+    document.getElementById('aiModal').classList.add('on');
+  }else{document.getElementById('aiBadge').innerHTML='📷 '+(lang==='kaa'?'Súwret júklendi':'Rasm yuklandi');}
+}
+function acceptAI(){
+  if(!aiData)return;
+  const btn=Array.from(document.querySelectorAll('.tybtn')).find(b=>b.textContent.includes(aiData.type));
+  if(btn){btn.classList.add('on');curType=aiData.type;}
+  document.querySelectorAll('.prib').forEach(b=>b.classList.remove('low','mid','high'));
+  const pm={low:0,mid:1,high:2};const pbs=document.querySelectorAll('.prib');
+  if(pbs[pm[aiData.priority]]){pbs[pm[aiData.priority]].classList.add(aiData.priority);curPri=aiData.priority;}
+  closeAI();toast('✅ AI natijasi qabul qilindi!');
+}
+function closeAI(){document.getElementById('aiModal').classList.remove('on');}
+
+async function uploadCloud(file,onP){
+  if(CFG.cloudName==='YOUR_CLOUDINARY_CLOUD_NAME')return 'https://via.placeholder.com/400x300?text=Demo';
+  return new Promise((res,rej)=>{
+    const fd=new FormData();fd.append('file',file);fd.append('upload_preset',CFG.uploadPreset);
+    const x=new XMLHttpRequest();
+    x.open('POST',`https://api.cloudinary.com/v1_1/${CFG.cloudName}/image/upload`);
+    x.upload.onprogress=e=>e.lengthComputable&&onP(e.loaded/e.total);
+    x.onload=()=>{const r=JSON.parse(x.responseText);r.secure_url?res(r.secure_url):rej(new Error(r.error?.message));};
+    x.onerror=()=>rej(new Error('Tarmoq xatosi'));x.send(fd);
+  });
+}
+async function submitReport(){
+  const loc=document.getElementById('locInp').value.trim();
+  const lat=parseFloat(document.getElementById('latInp').value)||42.4626+(Math.random()-.5)*.015;
+  const lng=parseFloat(document.getElementById('lngInp').value)||59.6166+(Math.random()-.5)*.015;
+  const desc=document.getElementById('descInp').value.trim()||'';
+  if(!loc){toast('❗ '+(lang==='kaa'?'Ornın jazıń':'Joyni kiriting'));return;}
+  if(!curType){toast('❗ '+(lang==='kaa'?'Qaldıq túrin tańlań':'Chiqindi turini tanlang'));return;}
+  if(!photoFile){toast('❗ '+(lang==='kaa'?'Súwret júkleń':'Rasm yuklang'));return;}
+  const btn=document.getElementById('subBtn');btn.disabled=true;btn.textContent='⏳ ...';
+  try{
+    document.getElementById('progBar').style.display='block';
+    const imgUrl=await uploadCloud(photoFile,p=>{document.getElementById('progFill').style.width=(p*100)+'%';});
+    const data={id:'i'+Date.now(),type:curType,addr:loc,description:desc,lat,lng,priority:curPri,author:CU?.name||'Anonim',authorEmail:CU?.email||'',resolved:false,confirmed:false,time:Date.now(),imageUrl:imgUrl,aiDetected:!!aiData};
+    if(CFG.supabaseUrl!=='YOUR_SUPABASE_URL'){await dbAdd(data);await loadData();}
+    else{issues.unshift(data);updateStats();renderMKS();renderList('');renderLB();}
+    resetForm();toast(aiData?'✅ AI kómegi menen xabar jiberildi!':'✅ Xabar jiberildi!');
+sw('map',document.querySelector('[data-t=map]'));
+setTimeout(()=>{renderMKS();map&&map.invalidateSize();},400);
+checkBadge();  }catch(e){toast('❗ '+e.message);}
+  finally{btn.disabled=false;btn.innerHTML='<span>📢 '+(lang==='kaa'?'Xabar jiberiw →':'Xabar yuborish →')+'</span>';document.getElementById('progBar').style.display='none';}
+}
+function resetForm(){
+  curType='';curPri='mid';photoFile=null;aiData=null;
+  document.getElementById('locInp').value='';document.getElementById('descInp').value='';
+  document.getElementById('latInp').value='42.4626';document.getElementById('lngInp').value='59.6166';
+  document.getElementById('prevImg').style.display='none';document.getElementById('phPh').style.display='block';
+  document.getElementById('photoInp').value='';
+  document.getElementById('aiBadge').innerHTML='🤖 <span>Súwret júkleń — AI ózi anıqlaydı</span>';
+  document.querySelectorAll('.tybtn').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.prib').forEach(b=>b.classList.remove('low','mid','high'));
+}
+
+// CONFIRM
+function renderConfList(){
+  const el=document.getElementById('confList');
+  const pd=issues.filter(i=>i.resolved&&!i.confirmed);
+  if(!pd.length){el.innerHTML=`<div class="empty"><div class="empty-em">✅</div><div class="empty-t">${lang==='kaa'?'Tastiyqlawdi kútiw joq!':'Tasdiqlash kutilmayapti!'}</div></div>`;return;}
+  el.innerHTML=pd.map(i=>{
+    const th=i.imageUrl?`<img src="${i.imageUrl}" class="icard-img"/>`:`<div class="icard-ico">${TIC[i.type]||'📍'}</div>`;
+    return `<div class="icard"><div style="position:relative">${th}<div style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#f4a621;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:9px;">⏳</div></div><div class="icard-body"><div class="icard-type" style="color:#f4a621">${lang==='kaa'?'⏳ Tastiyqlawdi kútedi':'⏳ Tasdiqlash kutilmoqda'}</div><div class="icard-addr">${i.type} — ${i.addr}</div><div class="icard-meta">👤 ${i.author||'Anonim'} · ${ago(i.time)}</div></div><button onclick="openConf('${i.id}')" style="flex-shrink:0;padding:8px 13px;background:var(--green);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;">📸</button></div>`;
+  }).join('');
+}
+function openConf(id){
+  confId=id;confPhoto=null;
+  document.getElementById('confprvimg').style.display='none';
+  document.getElementById('confPhPh').style.display='block';
+  document.getElementById('confPhInp').value='';
+  document.getElementById('confModal').classList.add('on');
+  if(map)map.closePopup();
+}
+function closeConf(){document.getElementById('confModal').classList.remove('on');confId=null;}
+function onConfPh(inp){
+  if(!inp.files?.[0])return;
+  confPhoto=inp.files[0];
+  const fr=new FileReader();
+  fr.onload=e=>{document.getElementById('confprvimg').src=e.target.result;document.getElementById('confprvimg').style.display='block';document.getElementById('confPhPh').style.display='none';};
+  fr.readAsDataURL(confPhoto);
+}
+async function submitConf(){
+  if(!confPhoto){toast('❗ '+(lang==='kaa'?'Súwret júkleń':'Rasm yuklang'));return;}
+  const btn=document.getElementById('confOkBtn');btn.disabled=true;
+  try{
+    const url=await uploadCloud(confPhoto,()=>{});
+    if(CFG.supabaseUrl!=='YOUR_SUPABASE_URL'){await dbPatch(confId,{confirmed:true,confImageUrl:url});await loadData();}
+    else{const i=issues.find(x=>x.id===confId);if(i){i.confirmed=true;}updateStats();renderMKS();if(map)setTimeout(()=>map.invalidateSize(),100);renderConfList();renderLB();}
+    closeConf();toast('🎉 '+(lang==='kaa'?'Tastiyqlandi! Rahmet!':'Tasdiqlandi! Rahmat!'));checkBadge();
+  }catch(e){toast('❗ '+e.message);}
+  finally{btn.disabled=false;}
+}
+
+// DASHBOARD
+function renderDashboard(){
+  const tot=issues.length,solv=issues.filter(i=>i.confirmed).length,aiC=issues.filter(i=>i.aiDetected).length;
+  document.getElementById('dTot').textContent=tot;
+  document.getElementById('dPct').textContent=tot?Math.round(solv/tot*100)+'%':'0%';
+  document.getElementById('dAi').textContent=aiC;
+  const now=new Date();
+  const mI=issues.filter(i=>{const d=new Date(i.time);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
+  const mC={};mI.forEach(i=>{const a=i.author||'Anonim';mC[a]=(mC[a]||0)+1;});
+  const mS=Object.entries(mC).sort((a,b)=>b[1]-a[1]);
+  if(mS.length){
+    document.getElementById('dMonth').textContent=mS[0][0];
+    document.getElementById('mwcard').style.display='flex';
+    document.getElementById('mwNm').textContent=mS[0][0];
+    document.getElementById('mwSb').textContent=mS[0][1]+(lang==='kaa'?' xabar bul ay':' xabar bu oy');
+  }
+  const tC={};issues.forEach(i=>tC[i.type]=(tC[i.type]||0)+1);
+  const maxV=Math.max(...Object.values(tC),1);
+  document.getElementById('typeChart').innerHTML=Object.entries(tC).map(([t,n])=>{
+    const h=Math.max(8,Math.round(n/maxV*80));
+    return `<div class="bar" style="height:${h}px"><span class="barval">${n}</span><span class="barlbl">${TIC[t]||'📦'}</span></div>`;
+  }).join('');
+  generateZone();generateMonthReport();
+}
+async function generateZone(){
+  const el=document.getElementById('zoneAnalysis');
+  const hr=issues.filter(i=>i.priority==='high'&&!i.confirmed);
+  if(CFG.geminiKey==='YOUR_GEMINI_API_KEY'){
+    el.innerHTML=`🔥 <b>${lang==='kaa'?'Demo: Qızıl zona tahlili':'Demo: Qizil zona tahlili'}</b><br/>
+• Ámudarya kóshesi — 2 ta qawipli xabar<br/>
+• Bazarǵa jaqın joy — aktiv mashqala<br/>
+• Sarıqtash kóshesi — muntazam qaldıq<br/>
+<span style="color:var(--sun)">⚠️ Jámi ${hr.length} ta qawipli mashqala bar</span>`;return;
+  }
+  try{
+    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${CFG.geminiKey}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:`EcoMap xabarları: ${JSON.stringify(issues.slice(0,8).map(i=>({addr:i.addr,type:i.type,priority:i.priority,resolved:i.confirmed})))}. Qısqa Qaraqalpaqsha qızıl zona tahlili (3-4 gap).`}]}]})
+    });
+    const d=await resp.json();
+    el.innerHTML=d.candidates?.[0]?.content?.parts?.[0]?.text?.replace(/\n/g,'<br/>')||'—';
+  }catch(e){el.innerHTML='Tahlil qilolmadi.';}
+}
+async function generateMonthReport(){
+  const el=document.getElementById('monthReport');
+  const tot=issues.length,solv=issues.filter(i=>i.confirmed).length,aiC=issues.filter(i=>i.aiDetected).length;
+  if(CFG.geminiKey==='YOUR_GEMINI_API_KEY'){
+    el.innerHTML=`📝 <b>${lang==='kaa'?'Demo: Aylıq Esabat':'Demo: Oylik Hisobot'}</b><br/>
+• Jámi ${tot} xabar qabıl etildi<br/>
+• ${solv} xabar muvaffaqiyatli tazalandi (${tot?Math.round(solv/tot*100):0}%)<br/>
+• ${aiC} xabar Gemini AI yordamida tahlil qilindi<br/>
+<span style="color:var(--green)">✅ Umumiy holat yaxshi!</span>`;return;
+  }
+  try{
+    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${CFG.geminiKey}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:`EcoMap aylıq: jámi ${tot}, tazalandı ${solv}, AI ${aiC}. Qısqa Qaraqalpaqsha esabat (4-5 gap).`}]}]})
+    });
+    const d=await resp.json();
+    el.innerHTML=d.candidates?.[0]?.content?.parts?.[0]?.text?.replace(/\n/g,'<br/>')||'—';
+  }catch(e){el.innerHTML='Esabat yozilmadi.';}
+}
+
+// AI CHAT
+function sug(el){document.getElementById('chatInp').value=el.dataset[lang]||el.textContent;sendChat();}
+async function sendChat(){
+  const inp=document.getElementById('chatInp');const msg=inp.value.trim();if(!msg)return;
+  inp.value='';addMsg(msg,'user');const typ=addTyping();
+  try{
+    if(CFG.geminiKey==='YOUR_GEMINI_API_KEY'){
+      await new Promise(r=>setTimeout(r,900));typ.remove();
+      addMsg('Demo rejimida ishlaydi. aistudio.google.com da BEPUL Gemini API kaliti oling!','bot');return;
+    }
+    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${CFG.geminiKey}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        system_instruction:{parts:[{text:'Siz EcoMap Nukus AI yordamchisisiz. Faqat ekologiya, chiqindilar, Orol dengizi, Qoraqalpog\'iston tabiatini muhofaza qilish haqida qisqa va aniq javob bering. Qaraqalpaq tilida so\'rasalar Qaraqalpaq tilida javob bering.'}]},
+        contents:[{role:'user',parts:[{text:msg}]}]
+      })
+    });
+    typ.remove();const d=await resp.json();
+    addMsg(d.candidates?.[0]?.content?.parts?.[0]?.text||'Kechirasiz...','bot');
+  }catch(e){typ.remove();addMsg('Xato: '+e.message,'bot');}
+}
+function addMsg(text,role){
+  const msgs=document.getElementById('chatMsgs');
+  const div=document.createElement('div');div.className='msg '+role;
+  const now=new Date().toLocaleTimeString('kk',{hour:'2-digit',minute:'2-digit'});
+  div.innerHTML=`<div class="mav ${role}">${role==='bot'?'🤖':CU?.name?.[0]?.toUpperCase()||'?'}</div><div><div class="mbub ${role}">${text}</div><div class="mtime">${now}</div></div>`;
+  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;return div;
+}
+function addTyping(){
+  const msgs=document.getElementById('chatMsgs');
+  const div=document.createElement('div');div.className='msg';
+  div.innerHTML=`<div class="mav bot">🤖</div><div class="mbub bot"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;return div;
+}
+
+// LEADERBOARD
+function renderLB(){
+  const el=document.getElementById('lb');
+  const cnt={};issues.forEach(i=>{const a=i.author||'Anonim';cnt[a]=(cnt[a]||0)+1;});
+  const sorted=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const medals=['🥇','🥈','🥉'];
+  if(!sorted.length){el.innerHTML=`<div class="empty"><div class="empty-em">🏆</div><div class="empty-t">${lang==='kaa'?'Hálide habar joq':'Hali xabar yo\'q'}</div></div>`;return;}
+  el.innerHTML=sorted.map(([nm,pts],i)=>{
+    const badge=BADGES.find(b=>pts>=b.min);
+    const isMe=CU&&nm===CU.name;
+    return `<div class="lbitem" style="${isMe?'border-color:var(--greenlb);background:var(--greenl)':''}">
+      <span class="lbpos">${medals[i]||i+1}</span>
+      <div class="lbav">${nm[0].toUpperCase()}</div>
+      <div class="lbinf"><div class="lbnm">${nm}${isMe?' 👤':''}</div>${badge?`<div class="lbbdg">${badge.ic} ${badge.name}</div>`:''}</div>
+      <span class="lbpts">${pts}</span>
+    </div>`;
+  }).join('');
+}
+
+// CENTERS
+function renderCenters(q){
+  const el=document.getElementById('cList');
+  const list=CENTERS.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())||c.tags.some(t=>t.toLowerCase().includes(q.toLowerCase())));
+  if(!list.length){el.innerHTML=`<div class="empty"><div class="empty-em">🏢</div><div class="empty-t">${lang==='kaa'?'Filial tabılmadı':'Markaz topilmadi'}</div></div>`;return;}
+  el.innerHTML=list.map(c=>`<div class="ccard"><div class="cch"><div class="ccic">${c.icon}</div><div><div class="ccnm">${c.name}</div><div class="ccdst">📍 ${c.dist}</div></div></div><div class="ccaddr">${c.addr}</div><div class="cctags">${c.tags.map(t=>`<span class="cctag">${t}</span>`).join('')}</div><div class="cchr">🕐 ${c.hours}</div><div class="ccbtns"><button class="ccb1" onclick="toast('📞 ${c.phone}')">📞 Qońıraw</button><a class="ccb2" href="https://www.openstreetmap.org/#map=16/${c.lat}/${c.lng}" target="_blank">🗺 Xaritada →</a></div></div>`).join('');
+}
+function fCenters(q){renderCenters(q);}
+
+// PROFILE
+function renderProfile(){
+  if(!CU)return;
+  const mine=issues.filter(i=>i.authorEmail===CU.email);
+  const tot=mine.length,solv=mine.filter(i=>i.confirmed).length,pend=mine.filter(i=>i.resolved&&!i.confirmed).length;
+  document.getElementById('myTot').textContent=tot;
+  document.getElementById('mySolv').textContent=solv;
+  document.getElementById('myConf').textContent=pend;
+  const badge=BADGES.find(b=>tot>=b.min);
+  document.getElementById('pBdg').textContent=badge?`${badge.ic} ${badge.name}`:'🌱 Baslanǵısh';
+}
+
+// ACHIEVEMENT
+function checkBadge(){
+  if(!CU)return;
+  const mine=issues.filter(i=>i.authorEmail===CU.email);
+  const tot=mine.length;const badge=BADGES.find(b=>tot>=b.min);if(!badge)return;
+  const key='ach_'+(CU.email||'g');const prev=parseInt(localStorage.getItem(key)||'0');
+  if(prev<badge.min){
+    localStorage.setItem(key,badge.min);
+    document.getElementById('achEm').textContent=badge.ic;
+    document.getElementById('achT').textContent=badge.name;
+    document.getElementById('achS').textContent=badge.msg;
+    document.getElementById('achBg').classList.add('on');
+  }
+}
+
+// LANGUAGE
+function setLang(l){
+  lang=l;
+  document.getElementById('btnKaa').classList.toggle('on',l==='kaa');
+  document.getElementById('btnUz').classList.toggle('on',l==='uz');
+  document.querySelectorAll('[data-kaa]').forEach(el=>{if(el.dataset[l]&&el.children.length===0)el.textContent=el.dataset[l];});
+  document.getElementById('welcomeMsg').textContent=l==='kaa'
+    ?'Assalawma Aleykum! Men  AI kómekshisimen. Ekologiya boyinsha sorawlariniz bolsa jiberin!'
+    :'Salom! Men Gemini AI yordamchisiman. Ekologiya, chiqindilar, Orol dengizi haqida so\'rang!';
+}
+
+// NAV
+function sw(name,btn){
+  document.querySelectorAll('.tb').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.pn').forEach(p=>p.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  const pn=document.getElementById('pn-'+name);if(pn)pn.classList.add('on');
+  if(name==='map'&&map)setTimeout(()=>{map.invalidateSize();renderMKS();},300);
+  if(name==='profile')renderProfile();
+  if(name==='dashboard')renderDashboard();
+  if(name==='weather')getWeather(curWeatherCity, document.getElementById('wcNukus'));
+}
+
+// ============================================================
+// WEATHER — Open-Meteo (100% bepul, karta kerak emas)
+// ============================================================
+const CITIES={
+  'Nukus':{lat:42.4626,lng:59.6166,name:'Nukus'},
+  'Qoʻngʻirot':{lat:42.8547,lng:59.1058,name:'Qońırat'},
+  'Moʻynoq':{lat:43.7730,lng:59.0260,name:'Muynoq'},
+  'Xoʻjayli':{lat:42.4058,lng:59.4614,name:'Xojeli'},
+  'Beruniy':{lat:41.6947,lng:60.7486,name:'Beruniy'},
+  'Qanlikoʻl':{lat:42.8500,lng:60.0500,name:'Qańlıkól'},
+};
+let curWeatherCity='Nukus';
+
+async function getWeather(cityKey, btn){
+  // Update active button
+  document.querySelectorAll('#pn-weather .mf').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  curWeatherCity=cityKey;
+
+  const city=CITIES[cityKey];
+  if(!city)return;
+
+  // Show loading
+  document.getElementById('weatherCard').innerHTML=`
+    <div style="text-align:center;padding:20px;">
+      <div class="spin"></div>
+      <div style="font-size:13px;color:var(--text3);margin-top:8px;">Yuklenmoqda...</div>
+    </div>`;
+  document.getElementById('weatherAiTip').innerHTML='<div class="spinw"><div class="spin"></div></div>';
+
+  try{
+    // Open-Meteo - 100% bepul, karta kerak emas
+    const url=`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lng}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,apparent_temperature&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum&timezone=Asia%2FTashkent&forecast_days=5`;
+    const resp=await fetch(url);
+    const d=await resp.json();
+    const cur=d.current;
+    const daily=d.daily;
+
+    // Weather code to emoji + name
+    function wCode(code){
+      if(code===0)return{em:'☀️',kaa:'Jaqsı ańlı',uz:'Ochiq'};
+      if(code<=3)return{em:'⛅',kaa:'Bulıtlı',uz:'Bulutli'};
+      if(code<=49)return{em:'🌫️',kaa:'Tuman',uz:'Tuman'};
+      if(code<=69)return{em:'🌧️',kaa:'Jawın-shashın',uz:'Yomg\'ir'};
+      if(code<=79)return{em:'❄️',kaa:'Qar',uz:'Qor'};
+      if(code<=99)return{em:'⛈️',kaa:'Nawqıran',uz:'Momaqaldiroq'};
+      return{em:'🌡️',kaa:'Belgisiz',uz:'Noaniq'};
+    }
+
+    const w=wCode(cur.weather_code);
+    const tempColor=cur.temperature_2m>30?'#e84c4c':cur.temperature_2m>20?'#f4a621':'#3a86d4';
+
+    // Render current weather
+    document.getElementById('weatherCard').innerHTML=`
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">${lang==='kaa'?city.name+' · Bugün':city.name+' · Bugun'}</div>
+          <div style="font-size:48px;font-weight:900;color:${tempColor};letter-spacing:-2px;line-height:1;">${Math.round(cur.temperature_2m)}°C</div>
+          <div style="font-size:13px;color:var(--text2);font-weight:600;margin-top:2px;">${lang==='kaa'?'Seziledi':' Seziladi'}: ${Math.round(cur.apparent_temperature)}°C</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:64px;line-height:1;">${w.em}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text2);margin-top:4px;">${lang==='kaa'?w.kaa:w.uz}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;">
+        <div style="background:rgba(255,255,255,.6);border-radius:12px;padding:10px;text-align:center;">
+          <div style="font-size:18px;">💧</div>
+          <div style="font-size:14px;font-weight:800;color:var(--blue);">${cur.relative_humidity_2m}%</div>
+          <div style="font-size:10px;color:var(--text3);font-weight:700;">${lang==='kaa'?'Ilgal':'Namlik'}</div>
+        </div>
+        <div style="background:rgba(255,255,255,.6);border-radius:12px;padding:10px;text-align:center;">
+          <div style="font-size:18px;">💨</div>
+          <div style="font-size:14px;font-weight:800;color:var(--blue);">${Math.round(cur.wind_speed_10m)} km/h</div>
+          <div style="font-size:10px;color:var(--text3);font-weight:700;">${lang==='kaa'?'Samal':'Samal'}</div>
+        </div>
+        <div style="background:rgba(255,255,255,.6);border-radius:12px;padding:10px;text-align:center;">
+          <div style="font-size:18px;">🌡️</div>
+          <div style="font-size:14px;font-weight:800;color:var(--red);">${Math.round(daily.temperature_2m_max[0])}°</div>
+          <div style="font-size:10px;color:var(--text3);font-weight:700;">${lang==='kaa'?'Max':'Max'}</div>
+        </div>
+      </div>
+      <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;">${lang==='kaa'?'5 KúnlikBoljawi':'5 Kunlik Bashorat'}</div>
+      <div style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;">
+        ${daily.time.slice(0,5).map((t,i)=>{
+          const dw=wCode(daily.weather_code[i]);
+          const date=new Date(t);
+          const days=lang==='kaa'?['Dm','Sl','Çr','Pt','Jm','Sh','Zh']:['Du','Se','Ch','Pa','Ju','Sh','Ya'];
+          const dayName=days[date.getDay()];
+          const rain=daily.precipitation_sum[i]>0?`<div style="font-size:9px;color:var(--blue);font-weight:700;">💧${daily.precipitation_sum[i]}mm</div>`:'';
+          return `<div style="flex-shrink:0;background:rgba(255,255,255,.7);border-radius:12px;padding:8px 10px;text-align:center;min-width:56px;">
+            <div style="font-size:11px;font-weight:800;color:var(--text3);">${i===0?(lang==='kaa'?'Búgin':'Bugun'):dayName}</div>
+            <div style="font-size:22px;margin:3px 0;">${dw.em}</div>
+            <div style="font-size:12px;font-weight:800;color:var(--red);">${Math.round(daily.temperature_2m_max[i])}°</div>
+            <div style="font-size:11px;color:var(--blue);font-weight:700;">${Math.round(daily.temperature_2m_min[i])}°</div>
+            ${rain}
+          </div>`;
+        }).join('')}
+      </div>`;
+
+    // AI ekologiya tavsiyasi
+    await getWeatherAiTip(cur, w, city.name);
+
+  }catch(e){
+    document.getElementById('weatherCard').innerHTML=`<div style="text-align:center;padding:20px;color:var(--red);font-weight:700;">❗ Hawa maǵlıwmatı alınbadı. Internetdi tekserińiz.</div>`;
+    console.error('Weather error:',e);
+  }
+}
+
+async function getWeatherAiTip(cur, w, cityName){
+  const el=document.getElementById('weatherAiTip');
+
+  // Demo mode
+  if(CFG.geminiKey==='YOUR_GEMINI_API_KEY'){
+    const temp=Math.round(cur.temperature_2m);
+    let tip='';
+    if(temp>35){
+      tip=lang==='kaa'
+        ?`🌡️ Bugün ${cityName}da hawa juda ıssı (${temp}°C). Qaldıq jıyıw aksiyasın erteli saat 7-9 aralıǵında ótkergen maqul. Ximiyalıq qaldıqlar ıssıqta zıyanlı gaz bólip shıǵarıwı múmkin — abay bolıń!`
+        :` 🌡️ Bugun ${cityName}da havo juda issiq (${temp}°C). Chiqindi yig'ish aksiyasini erta tongda 7-9 oralig'ida o'tkazish maqul. Kimyoviy chiqindilar issiqda zaharli gaz chiqarishi mumkin!`;
+    } else if(temp>25){
+      tip=lang==='kaa'
+        ?`☀️ ${cityName}da hawa jaqsı (${temp}°C). Qaldıq jıyıwǵa qolaylı kún! Plastik hám shısha qaldıqlarını bólip jıyıń. Suw içiw yadıńızdan shıqmasın.`
+        :`☀️ ${cityName}da havo yaxshi (${temp}°C). Chiqindi yig'ish uchun qulay kun! Plastik va shisha chiqindilarni alohida yig'ing. Suv ichishni unutmang.`;
+    } else {
+      tip=lang==='kaa'
+        ?`🌤️ ${cityName}da hawa salqınlaw (${temp}°C). Qurilıs qaldıqların tazalawǵa jaqsı kún. Samal kúshli bolsa, yengil materiallar ushıp ketiwi múmkin — abay bolıń.`
+        :`🌤️ ${cityName}da havo salqin (${temp}°C). Qurilish chiqindilarini tozalash uchun yaxshi kun. Shamol kuchli bo'lsa, yengil materiallar uchib ketishi mumkin.`;
+    }
+    el.innerHTML=tip;
+    return;
+  }
+
+  try{
+    const prompt=lang==='kaa'
+      ?`${cityName} qalasında bugün hawa: ${Math.round(cur.temperature_2m)}°C, ${w.kaa}, samal ${Math.round(cur.wind_speed_10m)}km/h. Ekologiya haqqinda  Qaraqalpaqsha usinislar ber ().`
+      :`${cityName} shahrida bugun havo: ${Math.round(cur.temperature_2m)}°C, ${w.uz}, shamol ${Math.round(cur.wind_speed_10m)}km/h. Ekologiya va chiqindi yig'ish nuqtai nazaridan qisqa O'zbekcha tavsiya ber ().`;
+
+    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${CFG.geminiKey}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
+    });
+    const d=await resp.json();
+    el.innerHTML=d.candidates?.[0]?.content?.parts?.[0]?.text?.replace(/\n/g,'<br/>')||'—';
+  }catch(e){
+    el.innerHTML=lang==='kaa'?'AI tavsiyası alınbadı.':'AI tavsiyasi olishda xato.';
+  }
+}
+
+// ============================================================
+// UTILS
+function ago(ts){
+  if(!ts)return'—';const d=Date.now()-ts;
+  if(d<120000)return lang==='kaa'?'Házir':'Hozir';
+  if(d<3600000)return Math.floor(d/60000)+(lang==='kaa'?' min burın':' min oldin');
+  if(d<86400000)return Math.floor(d/3600000)+(lang==='kaa'?' saat burın':' soat oldin');
+  return Math.floor(d/86400000)+(lang==='kaa'?' kún burın':' kun oldin');
+}
+function toast(m){
+  const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),3000);
+}
+</script>
+</body>
+</html>
